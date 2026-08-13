@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Pg 대멸종 논리적 글쓰기 시뮬레이터</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
+        
+        /* Strata Visuals */
+        .strata-b { background: url('https://www.transparenttextures.com/patterns/sandpaper.png'), #e2e8f0; }
+        .strata-kpg { background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png'), #475569; }
+        .strata-a { background: url('https://www.transparenttextures.com/patterns/brick-wall-dark.png'), #b45309; }
+        
+        .strata-hover:hover { filter: brightness(1.1); cursor: pointer; border: 2px dashed #fbbf24; }
+        
+        .card { cursor: grab; transition: all 0.2s; position: relative; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .card::after { content: "드래그"; position: absolute; right: 4px; bottom: 2px; font-size: 0.6rem; color: #94a3b8; font-weight: normal; }
+        .card:active { cursor: grabbing; transform: scale(0.98); }
+        .slot.drag-over { background-color: #fef3c7; border-color: #f59e0b; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white p-4 shadow-md flex justify-between items-center z-10">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight"><i class="fa-solid fa-meteor mr-2 text-yellow-300"></i>K-Pg 대멸종 논리적 글쓰기 연습</h1>
+            <p class="text-indigo-200 text-sm mt-1">고등학교 과학탐구실험2 | 대멸종의 원인 논술 수행평가 대비</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="showAnswerModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded font-bold transition-colors shadow">
+                <i class="fa-solid fa-lightbulb mr-2"></i>예시 답안 보기
+            </button>
+            <button onclick="resetApp()" class="bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded font-bold transition-colors shadow">
+                <i class="fa-solid fa-rotate-right mr-2"></i>처음부터 다시
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto w-full">
+        
+        <!-- Left Column: Strata Exploration -->
+        <section class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+            <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                <h2 class="font-bold text-lg text-slate-700"><i class="fa-solid fa-magnifying-glass mr-2 text-indigo-500"></i>1단계: 가상 지층 탐사</h2>
+                <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded">지층을 클릭하여 증거 수집</span>
+            </div>
+            
+            <div class="flex-grow flex p-4 gap-4 relative">
+                <!-- Strata Visual -->
+                <div class="w-1/2 h-full rounded-lg overflow-hidden flex flex-col shadow-inner border-4 border-slate-300 relative">
+                    <!-- B Layer -->
+                    <div id="layer-b" class="h-2/5 strata-b strata-hover relative flex items-center justify-center transition-all" onclick="extractEvidence('b')">
+                        <span class="bg-white/80 px-2 py-1 rounded font-bold text-slate-700 pointer-events-none">지층 B (상부)</span>
+                        <div id="badge-b" class="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full hidden">수집 완료</div>
+                    </div>
+                    <!-- K-Pg Layer -->
+                    <div id="layer-kpg" class="h-[10%] strata-kpg strata-hover relative flex items-center justify-center transition-all" onclick="extractEvidence('kpg')">
+                        <span class="bg-black/50 text-white px-2 py-0.5 text-xs rounded font-bold pointer-events-none">점토층 (경계)</span>
+                        <div id="badge-kpg" class="absolute top-1 right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full hidden">수집 완료</div>
+                    </div>
+                    <!-- A Layer -->
+                    <div id="layer-a" class="h-1/2 strata-a strata-hover relative flex items-center justify-center transition-all" onclick="extractEvidence('a')">
+                        <span class="bg-white/80 px-2 py-1 rounded font-bold text-slate-800 pointer-events-none">지층 A (하부)</span>
+                        <div id="badge-a" class="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full hidden">수집 완료</div>
+                    </div>
+                </div>
+
+                <!-- Info Panel -->
+                <div class="w-1/2 h-full flex flex-col">
+                    <h3 class="font-bold text-sm text-slate-500 mb-2">획득한 단서 카드</h3>
+                    <div id="inventory" class="flex-grow bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-3 flex flex-col gap-2 overflow-y-auto">
+                        <!-- Evidence cards will appear here -->
+                        <div id="inventory-empty" class="h-full flex flex-col items-center justify-center text-slate-400">
+                            <i class="fa-regular fa-folder-open text-3xl mb-2"></i>
+                            <span class="text-sm font-medium text-center">지층을 클릭하여<br>단서를 찾아보세요.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Logic Board -->
+        <section class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+            <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                <h2 class="font-bold text-lg text-slate-700"><i class="fa-solid fa-diagram-project mr-2 text-emerald-500"></i>2단계: 인과관계 보드</h2>
+                <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded">카드를 드래그하여 논리 연결</span>
+            </div>
+            
+            <div class="flex-grow p-4 bg-slate-50 overflow-y-auto">
+                <p class="text-sm text-slate-500 font-medium mb-4 text-center">수집한 단서들을 원인과 결과 순서대로 배치해 보세요.</p>
+                
+                <div class="flex flex-col items-center gap-2 max-w-sm mx-auto">
+                    <!-- Slot 1 -->
+                    <div class="w-full flex items-center justify-between">
+                        <span class="font-bold text-slate-400 w-12 text-right text-sm">원인</span>
+                        <div class="slot w-64 h-16 bg-white border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center transition-colors relative" id="slot-1" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"><span class="text-slate-300 text-sm pointer-events-none absolute">여기에 카드 드롭</span></div>
+                    </div>
+                    
+                    <i class="fa-solid fa-arrow-down text-slate-300 text-xl my-1"></i>
+                    
+                    <!-- Slot 2 -->
+                    <div class="w-full flex items-center justify-between">
+                        <span class="font-bold text-slate-400 w-12 text-right text-sm">과정 1</span>
+                        <div class="slot w-64 h-16 bg-white border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center transition-colors relative" id="slot-2" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"><span class="text-slate-300 text-sm pointer-events-none absolute">여기에 카드 드롭</span></div>
+                    </div>
+                    
+                    <i class="fa-solid fa-arrow-down text-slate-300 text-xl my-1"></i>
+                    
+                    <!-- Slot 3 -->
+                    <div class="w-full flex items-center justify-between">
+                        <span class="font-bold text-slate-400 w-12 text-right text-sm">과정 2</span>
+                        <div class="slot w-64 h-16 bg-white border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center transition-colors relative" id="slot-3" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"><span class="text-slate-300 text-sm pointer-events-none absolute">여기에 카드 드롭</span></div>
+                    </div>
+                    
+                    <i class="fa-solid fa-arrow-down text-slate-300 text-xl my-1"></i>
+                    
+                    <!-- Slot 4 -->
+                    <div class="w-full flex items-center justify-between">
+                        <span class="font-bold text-slate-400 w-12 text-right text-sm">결과</span>
+                        <div class="slot w-64 h-16 bg-white border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center transition-colors relative" id="slot-4" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)"><span class="text-slate-300 text-sm pointer-events-none absolute">여기에 카드 드롭</span></div>
+                    </div>
+                </div>
+                
+                <!-- Extra logic ideas / pre-made text cards -->
+                <div class="mt-6 border-t pt-4 border-slate-200">
+                    <h3 class="font-bold text-sm text-slate-500 mb-2">논리 추론 카드 (자유롭게 사용)</h3>
+                    <div class="flex flex-wrap gap-2" id="logic-inventory">
+                        <div class="card bg-orange-100 border border-orange-300 text-orange-800 text-sm font-bold px-3 py-2 rounded cursor-grab shadow-sm flex-shrink-0" draggable="true" ondragstart="dragStart(event)" id="card-logic-1">대규모 먼지구름과 햇빛 차단</div>
+                        <div class="card bg-orange-100 border border-orange-300 text-orange-800 text-sm font-bold px-3 py-2 rounded cursor-grab shadow-sm flex-shrink-0" draggable="true" ondragstart="dragStart(event)" id="card-logic-2">지구 기온 급강하 및 광합성 중단</div>
+                        <div class="card bg-orange-100 border border-orange-300 text-orange-800 text-sm font-bold px-3 py-2 rounded cursor-grab shadow-sm flex-shrink-0" draggable="true" ondragstart="dragStart(event)" id="card-logic-3">초식/육식 공룡 굶어 죽음 (대멸종)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Column: Writing Pad -->
+        <section class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden col-span-1 lg:col-span-2 flex flex-col md:flex-row h-auto md:h-[400px]">
+            <!-- Text Editor -->
+            <div class="flex-grow flex flex-col border-r border-slate-200">
+                <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                    <h2 class="font-bold text-lg text-slate-700"><i class="fa-solid fa-pen-nib mr-2 text-blue-500"></i>3단계: 실전 논술 작성</h2>
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors" onclick="copyText()">
+                        <i class="fa-solid fa-copy mr-1"></i>글 복사하기
+                    </button>
+                </div>
+                <div class="p-4 flex-grow relative bg-[url('https://www.transparenttextures.com/patterns/lined-paper-2.png')] bg-white">
+                    <textarea id="essay-text" class="w-full h-full bg-transparent resize-none outline-none leading-relaxed text-slate-800 font-medium placeholder-slate-400" placeholder="위에서 탐사한 단서와 구성한 인과관계 보드를 바탕으로 대멸종의 원인과 지층의 변화를 한 편의 글로 서술해 보세요..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Rubric Checklist -->
+            <div class="w-full md:w-80 bg-slate-50 flex flex-col shrink-0">
+                <div class="bg-slate-200 px-4 py-3 border-b border-slate-300">
+                    <h2 class="font-bold text-md text-slate-700"><i class="fa-solid fa-list-check mr-2 text-slate-600"></i>수행평가 자기점검표</h2>
+                </div>
+                <div class="p-4 flex flex-col gap-4 overflow-y-auto">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" class="w-5 h-5 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">대멸종의 원인과 근거를 3가지 이상 명확하게 서술하였는가?</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" class="w-5 h-5 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">제공된 자료(단서 카드)를 해석하여 원인과 결과(인과관계)에 맞게 논리적으로 서술하였는가?</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" class="w-5 h-5 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">A지층과 B지층이 퇴적된 시기(중생대/신생대)와 그 근거(표준화석)를 정확히 서술하였는가?</span>
+                    </label>
+                    <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded text-xs text-yellow-800 font-medium leading-relaxed">
+                        <i class="fa-solid fa-lightbulb mr-1"></i> Tip: 공룡 화석은 중생대, 화폐석과 매머드는 신생대를 나타내는 표준화석입니다. 지층 사이의 고농도 이리듐은 우주(소행성)에서 온 증거입니다.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Answer Modal -->
+    <div id="answer-modal" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50 hidden opacity-0 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden transform scale-95 transition-transform" id="answer-modal-content">
+            <div class="bg-emerald-500 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-white font-bold text-xl"><i class="fa-solid fa-clipboard-check mr-2"></i>예시 답안 (모범 답안)</h2>
+                <button onclick="hideAnswerModal()" class="text-white/80 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">1. 올바른 인과관계 흐름</h3>
+                <div class="bg-slate-50 p-4 rounded-lg flex flex-col gap-2 mb-6 border border-slate-200">
+                    <div class="flex items-center gap-3"><span class="bg-slate-700 text-white text-xs px-2 py-1 rounded font-bold w-12 text-center">원인</span><span class="font-medium">소행성 기원 고농도 이리듐 / 강한 압력을 받은 충격 석영</span></div>
+                    <i class="fa-solid fa-arrow-down text-slate-400 ml-5 text-sm"></i>
+                    <div class="flex items-center gap-3"><span class="bg-slate-700 text-white text-xs px-2 py-1 rounded font-bold w-12 text-center">과정1</span><span class="font-medium">대규모 먼지구름과 햇빛 차단</span></div>
+                    <i class="fa-solid fa-arrow-down text-slate-400 ml-5 text-sm"></i>
+                    <div class="flex items-center gap-3"><span class="bg-slate-700 text-white text-xs px-2 py-1 rounded font-bold w-12 text-center">과정2</span><span class="font-medium">지구 기온 급강하 및 광합성 중단</span></div>
+                    <i class="fa-solid fa-arrow-down text-slate-400 ml-5 text-sm"></i>
+                    <div class="flex items-center gap-3"><span class="bg-slate-700 text-white text-xs px-2 py-1 rounded font-bold w-12 text-center">결과</span><span class="font-medium">초식/육식 공룡 굶어 죽음 (대멸종)</span></div>
+                </div>
+                
+                <h3 class="font-bold text-slate-700 border-b pb-2 mb-4">2. 논술 예시 작성문</h3>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 text-slate-700 leading-relaxed whitespace-pre-wrap">중생대에 퇴적된 하부 A지층에서는 공룡 뼈와 암모나이트 등 중생대를 대표하는 표준화석이 발견되었다. 반면 그 위 신생대에 퇴적된 B지층에서는 공룡 화석이 사라지고 포유류와 화폐석 화석이 나타난다. 이는 A지층과 B지층이 퇴적된 시기 사이에 대멸종 사건이 있었음을 의미한다. 
+
+두 지층 사이의 K-Pg 경계 점토층에서는 지구 표면에서 보기 힘든 소행성 기원의 고농도 이리듐과, 거대한 충격에 의해 생성되는 충격 석영이 발견된다. 이러한 증거들로 미루어 볼 때 대멸종의 원인은 거대한 소행성의 충돌로 추정된다. 
+
+소행성이 지구와 충돌하면서 발생한 엄청난 양의 먼지구름이 대기층을 덮어 햇빛을 차단하였고, 이로 인해 지구의 기온이 급강하하고 식물의 광합성이 중단되었다. 식물이 죽자 초식 공룡이 굶어 죽고 연이어 육식 공룡까지 굶어 죽으면서 중생대의 생태계가 붕괴되는 대멸종이 발생한 것이다.</div>
+            </div>
+            <div class="bg-slate-100 px-6 py-4 flex justify-end">
+                <button onclick="hideAnswerModal()" class="bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded font-bold transition-colors">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let collectedEvidence = {
+            a: false,
+            kpg: false,
+            b: false
+        };
+
+        const evidenceData = {
+            a: [
+                { id: 'card-a-1', text: '🦕 공룡 뼈 화석 (중생대 융성)' },
+                { id: 'card-a-2', text: '🐚 암모나이트 화석 (중생대 바다)' }
+            ],
+            kpg: [
+                { id: 'card-kpg-1', text: '☄️ 소행성 기원 고농도 이리듐' },
+                { id: 'card-kpg-2', text: '💥 강한 압력을 받은 충격 석영' }
+            ],
+            b: [
+                { id: 'card-b-1', text: '🦣 포유류 화석 (신생대 융성)' },
+                { id: 'card-b-2', text: '🪙 화폐석 화석 (신생대 바다)' }
+            ]
+        };
+
+        function extractEvidence(layerId) {
+            if (collectedEvidence[layerId]) return; // Already collected
+            
+            collectedEvidence[layerId] = true;
+            document.getElementById(`badge-${layerId}`).classList.remove('hidden');
+            document.getElementById('inventory-empty').classList.add('hidden');
+            
+            const inventory = document.getElementById('inventory');
+            
+            // Add cards
+            evidenceData[layerId].forEach(data => {
+                const card = document.createElement('div');
+                card.id = data.id;
+                card.className = "card bg-white border-2 border-indigo-200 text-indigo-900 text-sm font-bold p-2 rounded cursor-grab shadow-sm flex items-center";
+                card.draggable = true;
+                card.ondragstart = dragStart;
+                card.innerText = data.text;
+                
+                // Entrance animation
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(10px)';
+                card.style.transition = 'all 0.3s ease-out';
+                
+                inventory.appendChild(card);
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            });
+        }
+
+        // Drag and Drop Logic
+        let draggedElement = null;
+
+        function dragStart(event) {
+            draggedElement = event.target;
+            event.dataTransfer.setData('text/plain', event.target.id);
+            setTimeout(() => { event.target.style.opacity = '0.5'; }, 0);
+        }
+
+        function dragOver(event) {
+            event.preventDefault();
+            if (event.target.classList.contains('slot')) {
+                event.target.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave(event) {
+            if (event.target.classList.contains('slot')) {
+                event.target.classList.remove('drag-over');
+            }
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const slot = event.target.closest('.slot');
+            
+            if (slot) {
+                slot.classList.remove('drag-over');
+                
+                // If slot already has a card, move the old card back to inventory
+                if (slot.children.length > 0) {
+                    const existingCard = slot.children[0];
+                    if(existingCard.id.startsWith('card-logic')) {
+                        document.getElementById('logic-inventory').appendChild(existingCard);
+                    } else {
+                        document.getElementById('inventory').appendChild(existingCard);
+                    }
+                }
+                
+                // Place new card
+                draggedElement.style.opacity = '1';
+                slot.appendChild(draggedElement);
+            }
+        }
+
+        // Handle dragging back to inventory/logic inventory (optional functionality for robustness)
+        document.addEventListener('dragend', (e) => {
+            if(draggedElement) draggedElement.style.opacity = '1';
+        });
+
+        // Copy Text Function
+        function copyText() {
+            const textarea = document.getElementById('essay-text');
+            if(textarea.value.trim() === '') {
+                alert('복사할 내용이 없습니다.');
+                return;
+            }
+            textarea.select();
+            document.execCommand('copy');
+            alert('작성한 내용이 클립보드에 복사되었습니다.');
+        }
+
+        // Reset App
+        function resetApp() {
+            if(confirm('모든 진행 상황과 작성 중인 글이 초기화됩니다. 계속하시겠습니까?')) {
+                location.reload();
+            }
+        }
+        // Modal Logic
+        function showAnswerModal() {
+            const modal = document.getElementById('answer-modal');
+            const content = document.getElementById('answer-modal-content');
+            modal.classList.remove('hidden');
+            // trigger reflow
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }
+
+        function hideAnswerModal() {
+            const modal = document.getElementById('answer-modal');
+            const content = document.getElementById('answer-modal-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // match transition duration
+        }
+    </script>
+</body>
+</html>

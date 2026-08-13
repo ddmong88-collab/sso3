@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>생명 시스템: 천연 항생물질의 효과성 검증</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        .step-item.active { background-color: #EFF6FF; border-left: 4px solid #3B82F6; font-weight: bold; color: #1E3A8A; }
+        .step-item.completed { color: #10B981; }
+        .step-content { display: none; }
+        .step-content.active { display: flex; flex-direction: column; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .grind-btn:active { transform: scale(0.95); }
+        .animate-boil { animation: boil 1s infinite alternate; }
+        @keyframes boil { from { transform: translateY(0) scale(1); opacity: 0.8;} to { transform: translateY(-5px) scale(1.05); opacity: 1;} }
+        .animate-smear { animation: smear 2s ease-in-out forwards; transform-origin: bottom left; }
+        @keyframes smear { 
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            10% { transform: translate(-100px, 0) rotate(-10deg); }
+            30% { transform: translate(-150px, -40px) rotate(10deg); }
+            50% { transform: translate(-110px, 40px) rotate(-15deg); }
+            70% { transform: translate(-160px, -20px) rotate(15deg); }
+            90% { transform: translate(-130px, 20px) rotate(0deg); }
+            100% { transform: translate(-130px, 20px) rotate(0deg); opacity: 0; }
+        }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            50% { transform: rotate(15deg); }
+            75% { transform: rotate(-15deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-spatula { animation: spatulaMove 1.5s forwards; }
+        @keyframes spatulaMove {
+            0% { transform: translate(50px, -50px) rotate(45deg); opacity: 0; }
+            30% { transform: translate(10px, -30px) rotate(15deg); opacity: 1; }
+            70% { transform: translate(10px, -30px) rotate(-15deg); opacity: 1; }
+            100% { transform: translate(50px, -50px) rotate(45deg); opacity: 0; }
+        }
+        .action-highlight { animation: pulseBorder 1.5s infinite; }
+        @keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        
+        /* 삼각플라스크 모양 */
+        .erlenmeyer-flask {
+            clip-path: polygon(35% 0%, 65% 0%, 65% 35%, 100% 100%, 0% 100%, 35% 35%);
+        }
+        .draggable-item { cursor: grab; }
+        .draggable-item:active { cursor: grabbing; }
+        
+        /* Drop target highlight */
+        .drop-target-active { background-color: rgba(59, 130, 246, 0.2) !important; border-color: #3b82f6 !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-md py-4 px-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold"><i class="fa-solid fa-flask text-yellow-300 mr-2"></i>생명 시스템: 천연 항생물질의 효과성 검증</h1>
+            <p class="text-blue-100 text-sm mt-1">고등학교 통합과학 / 생명과학 I 가상실험실</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="toggleSound()" id="btnSound" class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center">
+                <i class="fa-solid fa-volume-high mr-2" id="iconSound"></i>효과음 ON
+            </button>
+            <button onclick="resetLab()" class="bg-slate-100 hover:bg-slate-200 text-blue-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                <i class="fa-solid fa-rotate-right mr-2"></i>실험 재설정
+            </button>
+        </div>
+    </header>
+
+    <!-- Safety Panel -->
+    <div id="safetyPanel" class="bg-yellow-100 border-b-4 border-yellow-400 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm z-10 transition-all duration-500">
+        <div class="flex items-center text-yellow-800">
+            <i class="fa-solid fa-triangle-exclamation text-2xl mr-3"></i>
+            <div>
+                <p class="font-bold">실험실 안전 수칙 준수</p>
+                <p class="text-sm">안전한 실험을 위해 필수 안전장구를 먼저 착용해야 실험 기구를 만질 수 있습니다.</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button id="btnGoggles" onclick="toggleSafety('goggles')" class="bg-white border-2 border-slate-300 hover:border-blue-500 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center shadow-sm">
+                <i class="fa-solid fa-glasses mr-2 text-slate-400"></i><span>보안경 착용</span>
+            </button>
+            <button id="btnGloves" onclick="toggleSafety('gloves')" class="bg-white border-2 border-slate-300 hover:border-blue-500 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center shadow-sm">
+                <i class="fa-solid fa-hand-dots mr-2 text-slate-400"></i><span>니트릴장갑 착용</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg z-0 flex flex-col border-r border-slate-200 shrink-0">
+            <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700">
+                실험 단계 가이드
+            </div>
+            <ul id="stepList" class="flex-1 overflow-y-auto py-2">
+                <li class="step-item p-4 text-sm text-slate-600 border-b border-slate-100 active" data-step="1">
+                    <span class="inline-block w-6 h-6 rounded-full bg-slate-200 text-center leading-6 mr-2 step-num">1</span> 안전장구 착용
+                </li>
+                <li class="step-item p-4 text-sm text-slate-600 border-b border-slate-100" data-step="2">
+                    <span class="inline-block w-6 h-6 rounded-full bg-slate-200 text-center leading-6 mr-2 step-num">2</span> 멸균 배지 제작 및 도말
+                </li>
+                <li class="step-item p-4 text-sm text-slate-600 border-b border-slate-100" data-step="3">
+                    <span class="inline-block w-6 h-6 rounded-full bg-slate-200 text-center leading-6 mr-2 step-num">3</span> 추출물 강판 갈기 및 적시기
+                </li>
+                <li class="step-item p-4 text-sm text-slate-600 border-b border-slate-100" data-step="4">
+                    <span class="inline-block w-6 h-6 rounded-full bg-slate-200 text-center leading-6 mr-2 step-num">4</span> 페이퍼 디스크 올리기
+                </li>
+                <li class="step-item p-4 text-sm text-slate-600 border-b border-slate-100" data-step="5">
+                    <span class="inline-block w-6 h-6 rounded-full bg-slate-200 text-center leading-6 mr-2 step-num">5</span> 항온 배양기 동작
+                </li>
+                <li class="step-item p-4 text-sm text-slate-600" data-step="6">
+                    <span class="inline-block w-6 h-6 rounded-full bg-slate-200 text-center leading-6 mr-2 step-num">6</span> 억제대 측정 및 기록
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Stage -->
+        <main class="flex-1 p-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative overflow-y-auto">
+            
+            <div id="labDeskOverlay" class="absolute inset-0 bg-slate-900/10 backdrop-blur-[1px] z-20 flex items-center justify-center">
+                <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-yellow-400 text-center max-w-sm">
+                    <i class="fa-solid fa-lock text-3xl text-yellow-500 mb-2"></i>
+                    <p class="font-bold text-slate-700">실험대가 잠겨있습니다.</p>
+                    <p class="text-sm text-slate-500 mt-1">상단의 안전장구를 모두 착용해주세요.</p>
+                </div>
+            </div>
+
+            <div class="glass-panel min-h-full rounded-2xl shadow-xl flex flex-col">
+                <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-white/50 rounded-t-2xl">
+                    <h2 id="stageTitle" class="text-xl font-bold text-blue-800">1단계: 실험 준비</h2>
+                </div>
+                
+                <div class="flex-1 p-8 relative flex flex-col items-center justify-center">
+                    
+                    <!-- Step 1 View -->
+                    <div id="view-step-1" class="step-content active w-full max-w-lg mx-auto text-center items-center">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2932/2932454.png" alt="Lab Safety" class="w-48 h-48 mx-auto mb-6 opacity-80 drop-shadow-md">
+                        <h3 class="text-2xl font-bold text-slate-700 mb-4">안전한 실험 준비</h3>
+                        <p class="text-slate-600 mb-6">상단의 노란색 패널에서 <b>보안경</b>과 <b>니트릴장갑</b>을 착용하여 실험 기구를 잠금 해제하세요.</p>
+                    </div>
+
+                    <!-- Step 2 View: Making Agar & Smearing -->
+                    <div id="view-step-2" class="step-content w-full max-w-5xl mx-auto items-center">
+                        <h3 class="text-xl font-bold text-slate-700 mb-2">멸균 배지 제작 및 대장균 도말</h3>
+                        <p id="s2-instruction" class="text-slate-500 mb-8 font-medium">1. 증류수를 클릭하여 삼각플라스크에 부으세요.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full mb-8 items-end justify-items-center relative">
+                            
+                            <!-- Distilled Water -->
+                            <div class="flex flex-col items-center cursor-pointer" onclick="s2_addWater()" id="s2-obj-water">
+                                <div class="w-16 h-20 bg-slate-100 border-2 border-slate-300 rounded-lg relative overflow-hidden flex items-end justify-center action-highlight transition-all">
+                                    <div class="w-full h-3/4 bg-blue-100/50 border-t border-blue-200/50"></div>
+                                    <i class="fa-solid fa-bottle-water absolute text-slate-400 text-2xl top-2"></i>
+                                </div>
+                                <span class="text-xs mt-2 font-bold text-slate-600 text-center">클릭:<br>증류수 넣기</span>
+                            </div>
+
+                            <!-- Powder -->
+                            <div class="flex flex-col items-center cursor-not-allowed opacity-50" onclick="s2_addPowder()" id="s2-obj-powder">
+                                <div class="w-16 h-20 bg-slate-100 border-2 border-slate-300 rounded-lg relative overflow-hidden flex items-end justify-center transition-all">
+                                    <div class="w-full h-1/2 bg-yellow-100 border-t border-yellow-200"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-500">배지<br>가루</div>
+                                </div>
+                                <span class="text-xs mt-2 font-bold text-slate-600 text-center">클릭:<br>파우더 넣기</span>
+                            </div>
+
+                            <!-- Hotplate & Flask -->
+                            <div class="flex flex-col items-center relative col-span-2">
+                                <!-- Spatula Animation Element -->
+                                <div id="s2-spatula" class="absolute -right-4 -top-8 text-slate-400 text-2xl opacity-0 z-20 pointer-events-none">
+                                    <i class="fa-solid fa-spoon"></i>
+                                </div>
+                                
+                                <div class="w-40 h-8 bg-slate-800 rounded mb-1 relative border-t-4 border-red-500 flex justify-center shadow-lg" id="s2-hotplate">
+                                    <span class="text-[10px] text-white absolute bottom-1">가열기(Hotplate)</span>
+                                </div>
+                                <!-- Erlenmeyer Flask -->
+                                <div class="w-24 h-28 erlenmeyer-flask bg-blue-50/20 absolute bottom-9 flex items-end justify-center overflow-hidden cursor-not-allowed transition-all border-2 border-slate-300" id="s2-flask" onclick="s2_interactFlask()" ondragstart="event.dataTransfer.setData('text/plain', 'flask')" draggable="false">
+                                    <div id="s2-flask-liquid" class="w-full h-0 bg-blue-100/30 transition-all duration-1000"></div>
+                                    <div class="absolute inset-0 erlenmeyer-flask border-4 border-white/50 pointer-events-none"></div>
+                                </div>
+                                <span id="s2-txt-hotplate" class="text-xs mt-2 text-slate-400 font-bold">대기 중</span>
+                            </div>
+
+                            <!-- Autoclave -->
+                            <div class="flex flex-col items-center cursor-not-allowed opacity-50 transition-all" id="s2-autoclave" ondragover="event.preventDefault(); this.classList.add('drop-target-active')" ondragleave="this.classList.remove('drop-target-active')" ondrop="s2_handleFlaskDrop(event)">
+                                <div class="w-24 h-28 bg-slate-300 border-4 border-slate-500 rounded-lg shadow-md flex items-center justify-center flex-col relative transition-colors">
+                                    <div class="w-16 h-16 bg-slate-800 rounded-full border-4 border-slate-400 flex items-center justify-center">
+                                        <i class="fa-solid fa-fan text-slate-500 text-2xl" id="s2-auto-fan"></i>
+                                    </div>
+                                    <div class="absolute top-1 right-2 w-2 h-2 rounded-full bg-red-500" id="s2-auto-led"></div>
+                                </div>
+                                <span id="s2-txt-auto" class="text-xs mt-2 text-slate-600 font-bold">멸균기</span>
+                            </div>
+
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="w-full h-px bg-slate-200 mb-8"></div>
+
+                        <!-- Pouring and Smearing -->
+                        <div class="flex justify-center gap-16 items-center w-full opacity-30 pointer-events-none transition-all duration-500" id="s2-pour-section">
+                            <div class="flex flex-col items-center">
+                                <div id="s2-flask-ready" onclick="s2_pourAgar()" class="w-20 h-24 erlenmeyer-flask bg-amber-400/80 shadow-md cursor-pointer hover:scale-105 transition-all flex items-center justify-center relative">
+                                    <div class="absolute inset-0 erlenmeyer-flask border-2 border-white/50 pointer-events-none"></div>
+                                </div>
+                                <span class="mt-2 text-xs font-bold text-slate-600">멸균액 붓기 (클릭)</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center relative">
+                                <div id="s2-petriDish" class="w-48 h-48 rounded-full border-4 border-slate-300 bg-white shadow-inner flex items-center justify-center relative overflow-hidden transition-colors" ondragover="event.preventDefault(); this.classList.add('drop-target-active')" ondragleave="this.classList.remove('drop-target-active')" ondrop="s2_handleSpreaderDrop(event)">
+                                    <div id="s2-agarLayer" class="absolute inset-0 bg-yellow-50 opacity-0 transition-opacity duration-1000"></div>
+                                    <div id="s2-bacteriaLayer" class="absolute inset-0 opacity-0 transition-opacity duration-1000 bg-[url('https://www.transparenttextures.com/patterns/microbial-mat.png')]"></div>
+                                    <span id="s2-dishLabel" class="text-slate-400 font-medium z-10">빈 페트리디쉬</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col items-center">
+                                <!-- Spreader (L-shape) -->
+                                <div id="s2-spreader" class="w-16 h-32 relative cursor-not-allowed opacity-50 hover:opacity-100 transition-all flex items-end" ondragstart="event.dataTransfer.setData('text/plain', 'spreader')" draggable="false">
+                                    <div class="w-2 h-32 bg-blue-300 rounded-t-full absolute right-0 bottom-0 border border-blue-400"></div>
+                                    <div class="w-16 h-2 bg-blue-300 rounded-l-full absolute bottom-0 right-0 border border-blue-400"></div>
+                                </div>
+                                <span id="s2-txt-spreader" class="mt-2 text-xs font-bold text-slate-600">스프레더 도말 (드래그)</span>
+                            </div>
+                        </div>
+
+                        <button id="btnNext2" onclick="nextStep()" class="hidden mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-md transition-transform transform hover:scale-105">
+                            추출 단계로 이동 <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 3 View: Grating & Soaking -->
+                    <div id="view-step-3" class="step-content w-full max-w-5xl mx-auto items-center">
+                        <h3 class="text-xl font-bold text-slate-700 mb-2">천연물 강판 갈기 및 디스크 적시기</h3>
+                        <p class="text-slate-500 mb-8 font-medium">강판 이미지를 클릭하여 재료를 간 후, 나타나는 디스크를 눌러 즙을 묻히세요.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                            <!-- Garlic -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center relative">
+                                <h4 class="font-bold text-lg mb-4 text-slate-700">마늘</h4>
+                                <!-- Grater area -->
+                                <div class="w-32 h-40 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')] bg-slate-300 rounded-t-full border-4 border-slate-400 mb-4 flex items-center justify-center cursor-pointer grind-btn shadow-inner relative overflow-hidden group" onclick="s3_grind('garlic')">
+                                    <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                                    <span id="s3-icon-garlic" class="text-6xl drop-shadow-md z-10 transition-transform">🧄</span>
+                                    <div class="absolute bottom-2 text-[10px] font-bold text-slate-600 bg-white/70 px-2 rounded">클릭하여 갈기</div>
+                                </div>
+                                
+                                <div class="w-full bg-slate-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                                    <div id="prog-garlic" class="bg-emerald-500 h-4 rounded-full transition-all duration-200" style="width: 0%"></div>
+                                </div>
+                                
+                                <!-- Resulting Extract & Disc -->
+                                <div id="s3-result-garlic" class="mt-4 opacity-0 pointer-events-none transition-all flex flex-col items-center bg-slate-50 p-3 rounded-lg w-full border border-slate-200">
+                                    <span class="text-xs font-bold text-slate-500 mb-2">마늘즙 추출 완료</span>
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-full border-2 border-emerald-300 bg-emerald-50 flex items-center justify-center relative shadow-inner">
+                                            <div class="absolute w-8 h-8 rounded-full bg-emerald-200/60"></div>
+                                        </div>
+                                        <i class="fa-solid fa-arrow-right text-slate-300"></i>
+                                        <!-- Paper Disc to Soak -->
+                                        <div id="s3-disc-garlic" onclick="s3_soak('garlic')" class="w-10 h-10 rounded-full bg-white border-2 border-slate-300 cursor-pointer hover:border-emerald-500 shadow flex items-center justify-center transition-colors">
+                                            <span class="text-[8px] font-bold text-slate-400">디스크</span>
+                                        </div>
+                                    </div>
+                                    <span id="s3-status-garlic" class="text-xs font-bold text-emerald-600 mt-2 hidden">적시기 완료!</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Ginger -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center relative">
+                                <h4 class="font-bold text-lg mb-4 text-slate-700">생강</h4>
+                                <div class="w-32 h-40 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')] bg-slate-300 rounded-t-full border-4 border-slate-400 mb-4 flex items-center justify-center cursor-pointer grind-btn shadow-inner relative overflow-hidden group" onclick="s3_grind('ginger')">
+                                    <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                                    <span id="s3-icon-ginger" class="text-6xl drop-shadow-md z-10 transition-transform">🫚</span>
+                                    <div class="absolute bottom-2 text-[10px] font-bold text-slate-600 bg-white/70 px-2 rounded">클릭하여 갈기</div>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                                    <div id="prog-ginger" class="bg-amber-500 h-4 rounded-full transition-all duration-200" style="width: 0%"></div>
+                                </div>
+                                
+                                <div id="s3-result-ginger" class="mt-4 opacity-0 pointer-events-none transition-all flex flex-col items-center bg-slate-50 p-3 rounded-lg w-full border border-slate-200">
+                                    <span class="text-xs font-bold text-slate-500 mb-2">생강즙 추출 완료</span>
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-full border-2 border-amber-300 bg-amber-50 flex items-center justify-center relative shadow-inner">
+                                            <div class="absolute w-8 h-8 rounded-full bg-amber-200/60"></div>
+                                        </div>
+                                        <i class="fa-solid fa-arrow-right text-slate-300"></i>
+                                        <div id="s3-disc-ginger" onclick="s3_soak('ginger')" class="w-10 h-10 rounded-full bg-white border-2 border-slate-300 cursor-pointer hover:border-amber-500 shadow flex items-center justify-center transition-colors">
+                                            <span class="text-[8px] font-bold text-slate-400">디스크</span>
+                                        </div>
+                                    </div>
+                                    <span id="s3-status-ginger" class="text-xs font-bold text-amber-600 mt-2 hidden">적시기 완료!</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Mustard -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center relative">
+                                <h4 class="font-bold text-lg mb-4 text-slate-700">겨자</h4>
+                                <div class="w-32 h-40 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')] bg-slate-300 rounded-t-full border-4 border-slate-400 mb-4 flex items-center justify-center cursor-pointer grind-btn shadow-inner relative overflow-hidden group" onclick="s3_grind('mustard')">
+                                    <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                                    <span id="s3-icon-mustard" class="text-6xl drop-shadow-md z-10 transition-transform">🌼</span>
+                                    <div class="absolute bottom-2 text-[10px] font-bold text-slate-600 bg-white/70 px-2 rounded">클릭하여 갈기</div>
+                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                                    <div id="prog-mustard" class="bg-yellow-500 h-4 rounded-full transition-all duration-200" style="width: 0%"></div>
+                                </div>
+                                
+                                <div id="s3-result-mustard" class="mt-4 opacity-0 pointer-events-none transition-all flex flex-col items-center bg-slate-50 p-3 rounded-lg w-full border border-slate-200">
+                                    <span class="text-xs font-bold text-slate-500 mb-2">겨자즙 추출 완료</span>
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-full border-2 border-yellow-300 bg-yellow-50 flex items-center justify-center relative shadow-inner">
+                                            <div class="absolute w-8 h-8 rounded-full bg-yellow-200/60"></div>
+                                        </div>
+                                        <i class="fa-solid fa-arrow-right text-slate-300"></i>
+                                        <div id="s3-disc-mustard" onclick="s3_soak('mustard')" class="w-10 h-10 rounded-full bg-white border-2 border-slate-300 cursor-pointer hover:border-yellow-500 shadow flex items-center justify-center transition-colors">
+                                            <span class="text-[8px] font-bold text-slate-400">디스크</span>
+                                        </div>
+                                    </div>
+                                    <span id="s3-status-mustard" class="text-xs font-bold text-yellow-600 mt-2 hidden">적시기 완료!</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="btnNext3" onclick="nextStep()" class="hidden mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-md transition-transform transform hover:scale-105">
+                            디스크 올리기 단계로 이동 <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 4 View -->
+                    <div id="view-step-4" class="step-content text-center w-full max-w-3xl mx-auto items-center">
+                        <h3 class="text-xl font-bold text-slate-700 mb-6">페이퍼 디스크 올리기</h3>
+                        <p class="text-slate-500 mb-6">4분할된 페트리디쉬의 각 구역을 클릭하여 방금 적신 디스크들을 올려놓으세요.<br><span class="text-xs">(대조군은 증류수를 묻힌 디스크입니다)</span></p>
+                        
+                        <div class="flex justify-center items-center gap-12">
+                            <div class="relative w-64 h-64 rounded-full bg-yellow-50 border-4 border-slate-300 shadow-inner grid grid-cols-2 grid-rows-2 overflow-hidden">
+                                <div id="quad-control" onclick="placeDisc('control')" class="border-r border-b border-slate-300/30 flex items-center justify-center cursor-pointer hover:bg-slate-200/50 transition-colors relative group">
+                                    <span class="absolute top-2 left-2 text-xs text-slate-400 font-bold group-hover:text-slate-600">증류수(대조군)</span>
+                                    <div class="disc w-8 h-8 rounded-full bg-white border border-slate-300 shadow-sm opacity-0 transition-opacity"></div>
+                                </div>
+                                <div id="quad-garlic" onclick="placeDisc('garlic')" class="border-b border-slate-300/30 flex items-center justify-center cursor-pointer hover:bg-emerald-100/30 transition-colors relative group">
+                                    <span class="absolute top-2 right-2 text-xs text-emerald-400 font-bold group-hover:text-emerald-600">마늘</span>
+                                    <div class="disc w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm opacity-0 transition-opacity flex items-center justify-center"><i class="fa-solid fa-droplet text-[8px] text-emerald-600 opacity-50"></i></div>
+                                </div>
+                                <div id="quad-ginger" onclick="placeDisc('ginger')" class="border-r border-slate-300/30 flex items-center justify-center cursor-pointer hover:bg-amber-100/30 transition-colors relative group">
+                                    <span class="absolute bottom-2 left-2 text-xs text-amber-400 font-bold group-hover:text-amber-600">생강</span>
+                                    <div class="disc w-8 h-8 rounded-full bg-amber-100 border border-amber-300 shadow-sm opacity-0 transition-opacity flex items-center justify-center"><i class="fa-solid fa-droplet text-[8px] text-amber-600 opacity-50"></i></div>
+                                </div>
+                                <div id="quad-mustard" onclick="placeDisc('mustard')" class="flex items-center justify-center cursor-pointer hover:bg-yellow-100/30 transition-colors relative group">
+                                    <span class="absolute bottom-2 right-2 text-xs text-yellow-500 font-bold group-hover:text-yellow-600">겨자</span>
+                                    <div class="disc w-8 h-8 rounded-full bg-yellow-100 border border-yellow-300 shadow-sm opacity-0 transition-opacity flex items-center justify-center"><i class="fa-solid fa-droplet text-[8px] text-yellow-600 opacity-50"></i></div>
+                                </div>
+                                
+                                <div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-slate-300/50 -translate-x-1/2 pointer-events-none"></div>
+                                <div class="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-300/50 -translate-y-1/2 pointer-events-none"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 h-12">
+                            <button id="btnNext4" onclick="nextStep()" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-md transition-transform transform hover:scale-105 mx-auto">
+                                배양 단계로 이동 <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 View -->
+                    <div id="view-step-5" class="step-content text-center w-full max-w-2xl mx-auto items-center">
+                        <h3 class="text-xl font-bold text-slate-700 mb-6">항온 배양기 동작 (37℃, 24시간)</h3>
+                        <p id="s5-instruction" class="text-slate-500 mb-6 font-medium">완성된 페트리디쉬를 마우스로 드래그하여 배양기 내부에 넣으세요.</p>
+                        
+                        <div class="flex items-center justify-center gap-12 w-full">
+                            
+                            <!-- Draggable dish outside incubator -->
+                            <div id="s5-external-dish" class="w-32 h-32 rounded-full bg-yellow-50 border-4 border-slate-300 shadow-lg flex items-center justify-center relative cursor-grab draggable-item action-highlight" ondragstart="event.dataTransfer.setData('text/plain', 'petridish')" draggable="true">
+                                <div class="absolute top-4 left-4 w-4 h-4 rounded-full bg-white border border-slate-300"></div>
+                                <div class="absolute top-4 right-4 w-4 h-4 rounded-full bg-emerald-100 border border-emerald-300"></div>
+                                <div class="absolute bottom-4 left-4 w-4 h-4 rounded-full bg-amber-100 border border-amber-300"></div>
+                                <div class="absolute bottom-4 right-4 w-4 h-4 rounded-full bg-yellow-100 border border-yellow-300"></div>
+                                <span class="absolute -bottom-8 text-xs font-bold text-slate-600 w-full text-center">드래그(Drag)</span>
+                            </div>
+
+                            <!-- Incubator (Drop Zone) -->
+                            <div id="s5-incubator" class="bg-slate-800 p-8 rounded-2xl shadow-2xl relative border-4 border-slate-700 w-full max-w-md transition-colors" ondragover="event.preventDefault(); this.classList.add('drop-target-active')" ondragleave="this.classList.remove('drop-target-active')" ondrop="s5_handleDishDrop(event)">
+                                <div class="absolute top-4 right-6 text-red-500 font-mono text-xl" id="tempDisplay">37.0 °C</div>
+                                
+                                <div class="w-48 h-48 mx-auto bg-slate-900 rounded-full border-8 border-slate-600 flex items-center justify-center shadow-inner relative overflow-hidden pointer-events-none">
+                                    <!-- Dish inside incubator (hidden initially) -->
+                                    <div id="s5-internal-dish" class="w-32 h-32 rounded-full bg-yellow-200 border-2 border-slate-500 relative opacity-0 transition-opacity duration-500">
+                                        <!-- Canvas for bacteria growth with real holes -->
+                                        <canvas id="bacteriaCanvas" class="absolute inset-0 w-full h-full rounded-full z-0 opacity-0 pointer-events-none"></canvas>
+
+                                        <div class="absolute top-4 left-4 w-4 h-4 rounded-full bg-white border border-slate-300 z-10"></div>
+                                        <div class="absolute top-4 right-4 w-4 h-4 rounded-full bg-emerald-100 border border-emerald-300 z-10"></div>
+                                        <div class="absolute bottom-4 left-4 w-4 h-4 rounded-full bg-amber-100 border border-amber-300 z-10"></div>
+                                        <div class="absolute bottom-4 right-4 w-4 h-4 rounded-full bg-yellow-100 border border-yellow-300 z-10"></div>
+                                    </div>
+                                    <span id="s5-incubator-hint" class="absolute text-slate-500 font-bold">여기에 드롭</span>
+                                </div>
+
+                                <div class="mt-8 relative h-12">
+                                    <button id="btnIncubate" onclick="startIncubation()" class="hidden absolute inset-0 bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-bold shadow-md transition-colors w-full">
+                                        배양 시작 (타임랩스)
+                                    </button>
+                                    <div id="incubationProgressContainer" class="hidden absolute inset-0 w-full flex-col">
+                                        <div class="text-white text-sm mb-1 flex justify-between"><span>시간 경과</span> <span id="timeElapsed">0시간</span></div>
+                                        <div class="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
+                                            <div id="incubationBar" class="bg-blue-500 h-3 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 6 View -->
+                    <div id="view-step-6" class="step-content w-full max-w-4xl mx-auto flex flex-col h-full">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-slate-700">억제대 측정 및 결과 기록</h3>
+                        </div>
+                        
+                        <div class="flex flex-col md:flex-row gap-8 flex-1">
+                            <div class="w-full md:w-1/2 flex flex-col items-center justify-center bg-slate-100 rounded-xl p-6 border border-slate-200">
+                                <div class="relative w-64 h-64 rounded-full bg-yellow-50 border-4 border-slate-300 shadow-inner grid grid-cols-2 grid-rows-2">
+                                    <div class="border-r border-b border-slate-300/30 flex items-center justify-center relative">
+                                        <div class="w-8 h-8 rounded-full bg-slate-900/10 absolute"></div>
+                                        <div class="w-8 h-8 rounded-full bg-white border border-slate-300 shadow-sm z-10 text-[8px] flex items-center justify-center font-bold text-slate-400">대조</div>
+                                    </div>
+                                    <div class="border-b border-slate-300/30 flex items-center justify-center relative">
+                                        <div class="w-24 h-24 rounded-full bg-emerald-900/10 absolute border border-dashed border-emerald-400/50"></div>
+                                        <div class="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm z-10 text-[8px] flex items-center justify-center font-bold text-emerald-600">마늘</div>
+                                    </div>
+                                    <div class="border-r border-slate-300/30 flex items-center justify-center relative">
+                                        <div class="w-12 h-12 rounded-full bg-amber-900/10 absolute border border-dashed border-amber-400/50"></div>
+                                        <div class="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 shadow-sm z-10 text-[8px] flex items-center justify-center font-bold text-amber-600">생강</div>
+                                    </div>
+                                    <div class="flex items-center justify-center relative">
+                                        <div class="w-16 h-16 rounded-full bg-yellow-900/10 absolute border border-dashed border-yellow-500/50"></div>
+                                        <div class="w-8 h-8 rounded-full bg-yellow-100 border border-yellow-300 shadow-sm z-10 text-[8px] flex items-center justify-center font-bold text-yellow-600">겨자</div>
+                                    </div>
+                                    
+                                    <div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-slate-300/50 -translate-x-1/2 pointer-events-none"></div>
+                                    <div class="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-300/50 -translate-y-1/2 pointer-events-none"></div>
+                                </div>
+                                <div class="mt-6 text-sm text-slate-500 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+                                    <i class="fa-solid fa-info-circle mr-1"></i> 투명환(억제대)의 크기가 클수록 항균 효과가 큽니다.
+                                </div>
+                            </div>
+                            
+                            <div class="w-full md:w-1/2 flex flex-col gap-4">
+                                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                    <table class="w-full text-sm text-left">
+                                        <thead class="bg-slate-100 text-slate-700">
+                                            <tr>
+                                                <th class="px-4 py-3">항균 물질</th>
+                                                <th class="px-4 py-3">억제대 지름 (mm)</th>
+                                                <th class="px-4 py-3">항균 효과 순위</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b border-slate-100">
+                                                <td class="px-4 py-3 font-medium text-slate-600">증류수 (대조군)</td>
+                                                <td class="px-4 py-3">0 mm</td>
+                                                <td class="px-4 py-3 text-slate-400">-</td>
+                                            </tr>
+                                            <tr class="border-b border-slate-100 bg-emerald-50">
+                                                <td class="px-4 py-3 font-bold text-emerald-700">마늘즙</td>
+                                                <td class="px-4 py-3 font-bold">18 mm</td>
+                                                <td class="px-4 py-3 font-bold text-emerald-600">1위</td>
+                                            </tr>
+                                            <tr class="border-b border-slate-100 bg-yellow-50">
+                                                <td class="px-4 py-3 font-bold text-yellow-700">겨자즙</td>
+                                                <td class="px-4 py-3 font-bold">12 mm</td>
+                                                <td class="px-4 py-3 font-bold text-yellow-600">2위</td>
+                                            </tr>
+                                            <tr class="bg-amber-50">
+                                                <td class="px-4 py-3 font-bold text-amber-700">생강즙</td>
+                                                <td class="px-4 py-3 font-bold">8 mm</td>
+                                                <td class="px-4 py-3 font-bold text-amber-600">3위</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col">
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">탐구 소감 및 결론 작성</label>
+                                    <textarea class="flex-1 w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none" placeholder="실험 결과를 바탕으로 알게 된 점을 작성해보세요. (예: 마늘이 가장 항균 작용이 뛰어나다...)"></textarea>
+                                </div>
+
+                                <button onclick="resetLab()" class="bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-lg font-bold shadow-md transition-colors">
+                                    실험 종료 및 초기화
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // State
+        let soundEnabled = true;
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('btnSound');
+            const icon = document.getElementById('iconSound');
+            if(soundEnabled) {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high mr-2" id="iconSound"></i>효과음 ON';
+                btn.classList.replace('bg-slate-300', 'bg-blue-500');
+                btn.classList.replace('text-slate-600', 'text-white');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark mr-2" id="iconSound"></i>효과음 OFF';
+                btn.classList.replace('bg-blue-500', 'bg-slate-300');
+                btn.classList.replace('text-white', 'text-slate-600');
+            }
+            playClickSound();
+        }
+
+        function playClickSound() {
+            if(!soundEnabled) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playGrindSound() {
+            if(!soundEnabled) return;
+            initAudio();
+            const bufferSize = audioCtx.sampleRate * 0.1;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 2000;
+            const gain = audioCtx.createGain();
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.02);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            noise.start(audioCtx.currentTime);
+            noise.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playBoilSound() {
+            if(!soundEnabled) return;
+            initAudio();
+            for(let i=0; i<30; i++) {
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300 + Math.random()*200, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.1);
+                }, Math.random() * 2000);
+            }
+        }
+
+        function playSmearSound() {
+            if(!soundEnabled) return;
+            initAudio();
+            const bufferSize = audioCtx.sampleRate * 0.5;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+            
+            for(let j=0; j<4; j++) {
+                setTimeout(() => {
+                    const noise = audioCtx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 1500;
+                    const gain = audioCtx.createGain();
+                    
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.1);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                    
+                    noise.start(audioCtx.currentTime);
+                    noise.stop(audioCtx.currentTime + 0.3);
+                }, j * 250);
+            }
+        }
+
+        function playPourSound() {
+            if(!soundEnabled) return;
+            initAudio();
+            const bufferSize = audioCtx.sampleRate * 1.5;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(500, audioCtx.currentTime);
+            filter.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 1.5);
+            const gain = audioCtx.createGain();
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.2);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+            noise.start(audioCtx.currentTime);
+            noise.stop(audioCtx.currentTime + 1.5);
+        }
+
+        let currentStep = 1;
+        let safetyState = { goggles: false, gloves: false };
+        
+        let s2 = { water: false, powder: false, shaken: false, heated: false, sterilized: false, poured: false, smeared: false };
+        
+        let extractionState = { garlic: 0, ginger: 0, mustard: 0 };
+        let soakedState = { garlic: false, ginger: false, mustard: false };
+        let discState = { control: false, garlic: false, ginger: false, mustard: false };
+        let isDishInIncubator = false;
+
+        function updateUI() {
+            const btnGoggles = document.getElementById('btnGoggles');
+            const btnGloves = document.getElementById('btnGloves');
+            
+            if (safetyState.goggles) {
+                btnGoggles.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                btnGoggles.classList.remove('bg-white', 'border-slate-300', 'text-slate-700');
+                btnGoggles.querySelector('i').classList.replace('text-slate-400', 'text-blue-500');
+            } else {
+                btnGoggles.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                btnGoggles.classList.add('bg-white', 'border-slate-300', 'text-slate-700');
+                btnGoggles.querySelector('i').classList.replace('text-blue-500', 'text-slate-400');
+            }
+
+            if (safetyState.gloves) {
+                btnGloves.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                btnGloves.classList.remove('bg-white', 'border-slate-300', 'text-slate-700');
+                btnGloves.querySelector('i').classList.replace('text-slate-400', 'text-blue-500');
+            } else {
+                btnGloves.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                btnGloves.classList.add('bg-white', 'border-slate-300', 'text-slate-700');
+                btnGloves.querySelector('i').classList.replace('text-blue-500', 'text-slate-400');
+            }
+
+            const isSafe = safetyState.goggles && safetyState.gloves;
+            const overlay = document.getElementById('labDeskOverlay');
+            if (isSafe && currentStep === 1) {
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; nextStep(); }, 500);
+            } else if (!isSafe) {
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+                currentStep = 1;
+            }
+
+            document.querySelectorAll('.step-item').forEach(el => {
+                const stepNum = parseInt(el.dataset.step);
+                el.classList.remove('active', 'completed');
+                
+                const badge = el.querySelector('.step-num');
+                badge.classList.remove('bg-blue-500', 'text-white', 'bg-emerald-500');
+                badge.classList.add('bg-slate-200', 'text-slate-600');
+                badge.innerHTML = stepNum;
+
+                if (stepNum < currentStep) {
+                    el.classList.add('completed');
+                    badge.classList.replace('bg-slate-200', 'bg-emerald-500');
+                    badge.classList.replace('text-slate-600', 'text-white');
+                    badge.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                } else if (stepNum === currentStep) {
+                    el.classList.add('active');
+                    badge.classList.replace('bg-slate-200', 'bg-blue-500');
+                    badge.classList.replace('text-slate-600', 'text-white');
+                }
+            });
+
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            const activeView = document.getElementById(`view-step-${currentStep}`);
+            if (activeView) activeView.classList.add('active');
+
+            const titles = [
+                "1단계: 실험실 안전 수칙 준수",
+                "2단계: 멸균 배지 제작 및 대장균 도말",
+                "3단계: 천연 추출물 준비 (강판 갈기 및 적시기)",
+                "4단계: 페이퍼 디스크 올리기",
+                "5단계: 항온 배양 (37℃, 24시간)",
+                "6단계: 측정 및 결과 기록"
+            ];
+            document.getElementById('stageTitle').innerText = titles[currentStep-1];
+        }
+
+        function toggleSafety(item) {
+            safetyState[item] = !safetyState[item];
+            playClickSound();
+            updateUI();
+        }
+        function nextStep() {
+            if (currentStep < 6) { 
+                playClickSound();
+                currentStep++; 
+                updateUI(); 
+            }
+        }
+
+        /* --- STEP 2 LOGIC --- */
+        function s2_addWater() {
+            if(s2.water) return;
+            s2.water = true;
+            playClickSound();
+            setTimeout(playPourSound, 100);
+            
+            document.getElementById('s2-obj-water').classList.remove('action-highlight');
+            document.getElementById('s2-obj-water').style.opacity = '0.3';
+            
+            document.getElementById('s2-flask-liquid').style.height = '40%';
+            
+            document.getElementById('s2-obj-powder').classList.remove('cursor-not-allowed', 'opacity-50');
+            document.getElementById('s2-obj-powder').classList.add('cursor-pointer', 'action-highlight');
+            
+            document.getElementById('s2-instruction').innerText = "2. 배지 파우더를 클릭하여 플라스크에 넣으세요.";
+        }
+
+        function s2_addPowder() {
+            if(!s2.water || s2.powder) return;
+            s2.powder = true;
+            playClickSound();
+            
+            document.getElementById('s2-obj-powder').classList.remove('action-highlight');
+            document.getElementById('s2-obj-powder').style.opacity = '0.3';
+            
+            // Spatula Animation
+            document.getElementById('s2-spatula').classList.add('animate-spatula');
+            
+            setTimeout(() => {
+                document.getElementById('s2-flask-liquid').classList.replace('bg-blue-100/30', 'bg-yellow-100/80');
+                
+                document.getElementById('s2-flask').classList.add('action-highlight', 'cursor-pointer');
+                document.getElementById('s2-flask').classList.remove('cursor-not-allowed');
+                
+                document.getElementById('s2-instruction').innerText = "3. 삼각플라스크를 클릭하여 혼합액을 섞어주세요.";
+                document.getElementById('s2-txt-hotplate').innerText = "클릭: 플라스크 섞기";
+            }, 1000);
+        }
+
+        function s2_interactFlask() {
+            if(!s2.powder) return;
+            if(!s2.shaken) {
+                s2_shakeFlask();
+            } else if (!s2.heated) {
+                s2_heatFlask();
+            }
+        }
+
+        function s2_shakeFlask() {
+            s2.shaken = true;
+            playClickSound();
+            
+            document.getElementById('s2-flask').classList.remove('action-highlight');
+            document.getElementById('s2-flask').classList.add('animate-shake');
+            
+            // Visual mix
+            setTimeout(() => {
+                document.getElementById('s2-flask-liquid').classList.replace('bg-yellow-100/80', 'bg-yellow-200/90');
+            }, 250);
+
+            setTimeout(() => {
+                document.getElementById('s2-flask').classList.remove('animate-shake');
+                document.getElementById('s2-flask').classList.add('action-highlight');
+                document.getElementById('s2-instruction').innerText = "4. 섞인 플라스크를 다시 클릭하여 가열기에서 끓이세요.";
+                document.getElementById('s2-txt-hotplate').innerText = "클릭: 플라스크 가열";
+            }, 500);
+        }
+
+        function s2_heatFlask() {
+            s2.heated = true;
+            playClickSound();
+            
+            document.getElementById('s2-flask').classList.remove('action-highlight');
+            document.getElementById('s2-txt-hotplate').innerText = "가열 중...";
+            
+            const flask = document.getElementById('s2-flask');
+            flask.classList.add('animate-boil');
+            playBoilSound();
+            
+            setTimeout(() => {
+                flask.classList.remove('animate-boil');
+                // Color transition during heating
+                document.getElementById('s2-flask-liquid').classList.replace('bg-yellow-200/90', 'bg-amber-500/90');
+                document.getElementById('s2-txt-hotplate').innerText = "가열 완료";
+                
+                document.getElementById('s2-autoclave').classList.remove('cursor-not-allowed', 'opacity-50');
+                document.getElementById('s2-instruction').innerText = "5. 가열된 삼각플라스크를 드래그하여 멸균기에 넣으세요.";
+                document.getElementById('s2-flask').classList.remove('cursor-pointer');
+                
+                // Make Flask Draggable
+                flask.setAttribute('draggable', 'true');
+                flask.classList.add('draggable-item', 'action-highlight');
+            }, 2000);
+        }
+
+        function s2_handleFlaskDrop(event) {
+            event.preventDefault();
+            document.getElementById('s2-autoclave').classList.remove('drop-target-active');
+            
+            const data = event.dataTransfer.getData('text/plain');
+            if(data === 'flask' && s2.heated && !s2.sterilized) {
+                s2.sterilized = true;
+                playClickSound();
+                
+                document.getElementById('s2-flask').classList.remove('action-highlight');
+                document.getElementById('s2-flask').setAttribute('draggable', 'false');
+                document.getElementById('s2-flask').classList.add('opacity-30'); // Flask is inside autoclave mentally
+                
+                document.getElementById('s2-auto-fan').classList.add('fa-spin');
+                document.getElementById('s2-auto-led').classList.replace('bg-red-500', 'bg-emerald-500');
+                document.getElementById('s2-txt-auto').innerText = "멸균 중...";
+                
+                setTimeout(() => {
+                    document.getElementById('s2-auto-fan').classList.remove('fa-spin');
+                    document.getElementById('s2-txt-auto').innerText = "멸균 완료";
+                    
+                    document.getElementById('s2-instruction').innerText = "6. 완성된 멸균 배지를 페트리디쉬에 붓고, 스프레더를 드래그하여 도말하세요.";
+                    
+                    document.getElementById('s2-pour-section').classList.remove('opacity-30', 'pointer-events-none');
+                    document.getElementById('s2-flask-ready').classList.add('action-highlight');
+                }, 2000);
+            }
+        }
+
+        function s2_pourAgar() {
+            if(!s2.sterilized || s2.poured) return;
+            s2.poured = true;
+            playClickSound();
+            setTimeout(playPourSound, 300);
+            
+            document.getElementById('s2-flask-ready').classList.remove('action-highlight');
+            document.getElementById('s2-flask-ready').style.transform = 'rotate(45deg)';
+            
+            setTimeout(() => {
+                document.getElementById('s2-agarLayer').style.opacity = '1';
+                document.getElementById('s2-dishLabel').innerText = '영양 배지 굳음';
+                document.getElementById('s2-flask-ready').style.transform = 'none';
+                document.getElementById('s2-flask-ready').style.opacity = '0.5';
+                
+                // Enable spreader drag
+                document.getElementById('s2-spreader').classList.remove('cursor-not-allowed', 'opacity-50');
+                document.getElementById('s2-spreader').classList.add('draggable-item', 'action-highlight');
+                document.getElementById('s2-spreader').setAttribute('draggable', 'true');
+            }, 1000);
+        }
+
+        function s2_handleSpreaderDrop(event) {
+            event.preventDefault();
+            document.getElementById('s2-petriDish').classList.remove('drop-target-active');
+            
+            const data = event.dataTransfer.getData('text/plain');
+            if(data === 'spreader' && s2.poured && !s2.smeared) {
+                s2.smeared = true;
+                
+                document.getElementById('s2-spreader').classList.remove('action-highlight');
+                document.getElementById('s2-spreader').setAttribute('draggable', 'false');
+                document.getElementById('s2-spreader').classList.add('animate-smear', 'pointer-events-none');
+                playSmearSound();
+                
+                setTimeout(() => {
+                    document.getElementById('s2-bacteriaLayer').style.opacity = '0.3';
+                    document.getElementById('s2-dishLabel').innerText = '대장균 도말 완료';
+                    document.getElementById('btnNext2').classList.remove('hidden');
+                }, 2000);
+            }
+        }
+
+
+        /* --- STEP 3 LOGIC --- */
+        function s3_grind(item) {
+            if (extractionState[item] >= 100) return;
+            
+            extractionState[item] += 25;
+            playGrindSound();
+            if (extractionState[item] > 100) extractionState[item] = 100;
+            
+            document.getElementById(`prog-${item}`).style.width = `${extractionState[item]}%`;
+            
+            const icon = document.getElementById(`s3-icon-${item}`);
+            icon.style.transform = `translate(${Math.random()*10 - 5}px, ${Math.random()*10 - 5}px)`;
+            setTimeout(() => icon.style.transform = 'none', 100);
+
+            if (extractionState[item] === 100) {
+                document.getElementById(`s3-result-${item}`).classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById(`s3-disc-${item}`).classList.add('action-highlight');
+            }
+        }
+
+        function s3_soak(item) {
+            if (extractionState[item] < 100 || soakedState[item]) return;
+            soakedState[item] = true;
+            playClickSound();
+            
+            const disc = document.getElementById(`s3-disc-${item}`);
+            disc.classList.remove('action-highlight', 'bg-white');
+            
+            if(item === 'garlic') disc.classList.add('bg-emerald-200', 'border-emerald-500');
+            if(item === 'ginger') disc.classList.add('bg-amber-200', 'border-amber-500');
+            if(item === 'mustard') disc.classList.add('bg-yellow-200', 'border-yellow-500');
+            
+            disc.innerHTML = '<i class="fa-solid fa-check text-xs text-slate-600"></i>';
+            document.getElementById(`s3-status-${item}`).classList.remove('hidden');
+            
+            s3_checkComplete();
+        }
+
+        function s3_checkComplete() {
+            if (soakedState.garlic && soakedState.ginger && soakedState.mustard) {
+                document.getElementById('btnNext3').classList.remove('hidden');
+            }
+        }
+
+
+        /* --- STEP 4 LOGIC --- */
+        function placeDisc(type) {
+            if (discState[type]) return;
+            discState[type] = true;
+            playClickSound();
+            
+            const quad = document.getElementById(`quad-${type}`);
+            const disc = quad.querySelector('.disc');
+            disc.style.opacity = '1';
+            
+            if(type === 'control') {
+                disc.classList.add('bg-white', 'border-slate-400');
+                disc.innerHTML = '<i class="fa-solid fa-droplet text-[8px] text-blue-300 opacity-50"></i>';
+            }
+            
+            if (discState.control && discState.garlic && discState.ginger && discState.mustard) {
+                document.getElementById('btnNext4').classList.remove('hidden');
+            }
+        }
+
+
+        /* --- STEP 5 LOGIC --- */
+        function s5_handleDishDrop(event) {
+            event.preventDefault();
+            document.getElementById('s5-incubator').classList.remove('drop-target-active');
+            
+            const data = event.dataTransfer.getData('text/plain');
+            if(data === 'petridish' && !isDishInIncubator) {
+                isDishInIncubator = true;
+                playClickSound();
+                
+                document.getElementById('s5-external-dish').classList.add('hidden');
+                document.getElementById('s5-incubator-hint').classList.add('hidden');
+                document.getElementById('s5-internal-dish').classList.remove('opacity-0');
+                
+                document.getElementById('s5-instruction').innerText = "버튼을 눌러 24시간 배양을 시작하세요.";
+                document.getElementById('btnIncubate').classList.remove('hidden');
+            }
+        }
+
+        function startIncubation() {
+            const btn = document.getElementById('btnIncubate');
+            const progressContainer = document.getElementById('incubationProgressContainer');
+            const bar = document.getElementById('incubationBar');
+            const timeLabel = document.getElementById('timeElapsed');
+            
+            btn.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+            progressContainer.classList.add('flex');
+
+            let progress = 0;
+            playClickSound();
+            
+            // Prepare the bacteria canvas
+            const canvas = document.getElementById('bacteriaCanvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw whitish bacteria lawn
+            ctx.fillStyle = 'rgba(255, 253, 245, 0.95)'; // Whitish/cream color for E.coli
+            ctx.beginPath();
+            ctx.arc(64, 64, 64, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Erase inhibition zones (destination-out)
+            ctx.globalCompositeOperation = 'destination-out';
+            
+            // Garlic (Top-Right: x=104, y=24) - Large halo
+            ctx.beginPath();
+            ctx.arc(104, 24, 24, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mustard (Bottom-Right: x=104, y=104) - Medium halo
+            ctx.beginPath();
+            ctx.arc(104, 104, 16, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ginger (Bottom-Left: x=24, y=104) - Small halo
+            ctx.beginPath();
+            ctx.arc(24, 104, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Control (Top-Left: x=24, y=24) - No halo, just the disc itself
+            ctx.beginPath();
+            ctx.arc(24, 24, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            const interval = setInterval(() => {
+                progress += 1;
+                bar.style.width = `${progress}%`;
+                
+                const hours = Math.floor((progress / 100) * 24);
+                timeLabel.innerText = `${hours}시간`;
+
+                // Bacteria canvas fades in, inherently leaving the clear agar holes visible!
+                canvas.style.opacity = progress * 0.009; // up to 0.9
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    timeLabel.innerText = '24시간 배양 완료!';
+                    playClickSound();
+                    setTimeout(() => {
+                        nextStep();
+                    }, 1500);
+                }
+            }, 100);
+        }
+
+        function resetLab() {
+            location.reload();
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
