@@ -83,10 +83,10 @@
     <div id="timer-display">⏱️ 00:00</div>
 
     <!-- 실시간 랭킹 티커 (상단 팝업 바) -->
-    <div id="live-ranking-ticker" style="position:fixed; top:0; left:0; width:100%; background:#1E3A8A; color:white; padding:10px 0; z-index:2000; overflow:hidden; display:none; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
-        <marquee behavior="scroll" direction="left" scrollamount="6" id="ticker-text" style="font-size:1.1rem; font-weight:bold; letter-spacing:1px;">
+    <div id="live-ranking-ticker" style="position:fixed; top:0; left:0; width:100%; background:#1E3A8A; color:white; padding:6px 0; z-index:2000; display:none; box-shadow:0 2px 5px rgba(0,0,0,0.2); text-align:center;">
+        <div id="ticker-text" style="font-size:0.95rem; letter-spacing:0.5px;">
             <!-- JS에서 내용 주입 -->
-        </marquee>
+        </div>
     </div>
 
     <!-- START SCREEN -->
@@ -253,6 +253,7 @@
             document.getElementById('timer-display').style.display = 'block';
             document.getElementById('live-ranking-ticker').style.display = 'block';
             updateTicker(); // 랭킹 텍스트 갱신
+            setInterval(updateTicker, 10000); // 10초마다 랭킹 실시간 갱신
 
             timerInterval = setInterval(() => {
                 timeElapsed++;
@@ -270,21 +271,20 @@
                 let response = await fetch(WEB_APP_URL + "?action=get");
                 let ranks = await response.json();
                 if(ranks.length === 0) {
-                    document.getElementById('ticker-text').innerText = "🏆 아직 등록된 랭킹이 없습니다. 가장 먼저 전설의 탐구 마스터가 되어보세요! 🏆";
+                    document.getElementById('ticker-text').innerText = "🏆 아직 랭킹이 없습니다. 1위의 주인공이 되어보세요!";
                     return;
                 }
-                let text = "🔥 [명예의 전당 Live] ";
-                ranks.slice(0, 10).forEach((r, idx) => {
+                let text = "🏆 명예의 전당 Top 3 ｜ ";
+                ranks.slice(0, 3).forEach((r, idx) => {
                     let m = String(Math.floor(r.time / 60)).padStart(2, '0');
                     let s = String(r.time % 60).padStart(2, '0');
-                    let medal = idx === 0 ? '🥇1위' : idx === 1 ? '🥈2위' : idx === 2 ? '🥉3위' : `${idx+1}위`;
-                    text += ` ｜ ${medal}: ${r.name} (${m}:${s})`;
+                    let medal = idx === 0 ? '🥇1위' : idx === 1 ? '🥈2위' : '🥉3위';
+                    text += `${medal} ${r.name} (${m}:${s}) ｜ `;
                 });
-                text += " ｜ 과연 다음 마스터는 누가 될 것인가?! 🔥";
-                document.getElementById('ticker-text').innerText = text;
+                document.getElementById('ticker-text').innerText = text.slice(0, -3); // 마지막 ｜ 제거
             } catch(e) {
                 console.error("티커 업데이트 에러", e);
-                document.getElementById('ticker-text').innerText = "🏆 랭킹 데이터를 서버에서 불러오는 중입니다... 🏆";
+                // 에러 발생 시 조용히 넘어감 (플레이 방해 안되게)
             }
         }
 
