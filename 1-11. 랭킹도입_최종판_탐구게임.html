@@ -263,21 +263,29 @@
         }
 
         // 실시간 랭킹 티커 업데이트 로직
-        function updateTicker() {
-            let ranks = JSON.parse(localStorage.getItem('science_ranks') || '[]');
-            if(ranks.length === 0) {
-                document.getElementById('ticker-text').innerText = "🏆 아직 등록된 랭킹이 없습니다. 가장 먼저 전설의 탐구 마스터가 되어보세요! 🏆";
-                return;
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVcRuapb6GjMQbdLynjPJ4-TAuPE9JMoHLCqdXAwBeN8Iagyr6uDPEdN1Byl0Frzag/exec";
+
+        async function updateTicker() {
+            try {
+                let response = await fetch(WEB_APP_URL + "?action=get");
+                let ranks = await response.json();
+                if(ranks.length === 0) {
+                    document.getElementById('ticker-text').innerText = "🏆 아직 등록된 랭킹이 없습니다. 가장 먼저 전설의 탐구 마스터가 되어보세요! 🏆";
+                    return;
+                }
+                let text = "🔥 [명예의 전당 Live] ";
+                ranks.slice(0, 10).forEach((r, idx) => {
+                    let m = String(Math.floor(r.time / 60)).padStart(2, '0');
+                    let s = String(r.time % 60).padStart(2, '0');
+                    let medal = idx === 0 ? '🥇1위' : idx === 1 ? '🥈2위' : idx === 2 ? '🥉3위' : `${idx+1}위`;
+                    text += ` ｜ ${medal}: ${r.name} (${m}:${s})`;
+                });
+                text += " ｜ 과연 다음 마스터는 누가 될 것인가?! 🔥";
+                document.getElementById('ticker-text').innerText = text;
+            } catch(e) {
+                console.error("티커 업데이트 에러", e);
+                document.getElementById('ticker-text').innerText = "🏆 랭킹 데이터를 서버에서 불러오는 중입니다... 🏆";
             }
-            let text = "🔥 [명예의 전당 Live] ";
-            ranks.slice(0, 10).forEach((r, idx) => {
-                let m = String(Math.floor(r.time / 60)).padStart(2, '0');
-                let s = String(r.time % 60).padStart(2, '0');
-                let medal = idx === 0 ? '🥇1위' : idx === 1 ? '🥈2위' : idx === 2 ? '🥉3위' : `${idx+1}위`;
-                text += ` ｜ ${medal}: ${r.name} (${m}:${s})`;
-            });
-            text += " ｜ 과연 다음 마스터는 누가 될 것인가?! 🔥";
-            document.getElementById('ticker-text').innerText = text;
         }
 
         // --- SVG Generators ---
@@ -610,7 +618,7 @@
             }
         }
 
-        function showFinalScreen() {
+        async function showFinalScreen() {
             document.getElementById('final-screen').classList.add('active');
             
             let m = Math.floor(timeElapsed / 60);
@@ -618,40 +626,37 @@
             document.getElementById('final-time-text').innerHTML = 
                 `<strong>${playerName}</strong>님,<br>모든 단계를 <strong><span style="color:#EF4444;">${m}분 ${s}초</span></strong>만에 클리어했습니다!`;
             
-            saveRanking(playerName, timeElapsed);
-            renderRankings();
+            document.getElementById('ranking-list').innerHTML = "<li>서버에 랭킹을 기록하는 중입니다... ⏳</li>";
+            await saveAndRenderRanking(playerName, timeElapsed);
         }
 
-        function saveRanking(name, time) {
-            let ranks = JSON.parse(localStorage.getItem('science_ranks') || '[]');
-            ranks.push({ name: name, time: time });
-            // 오름차순 정렬 (시간이 짧을수록 랭킹 높음)
-            ranks.sort((a, b) => a.time - b.time);
-            // 상위 10개만 유지
-            ranks = ranks.slice(0, 10);
-            localStorage.setItem('science_ranks', JSON.stringify(ranks));
-        }
-
-        function renderRankings() {
-            let ranks = JSON.parse(localStorage.getItem('science_ranks') || '[]');
-            let html = '';
-            ranks.forEach((r, idx) => {
-                let m = String(Math.floor(r.time / 60)).padStart(2, '0');
-                let s = String(r.time % 60).padStart(2, '0');
-                let medal = '';
-                if(idx === 0) medal = '🥇';
-                else if(idx === 1) medal = '🥈';
-                else if(idx === 2) medal = '🥉';
-                else medal = `<span style="display:inline-block; width:1.5em; text-align:center;">${idx+1}</span>`;
+        async function saveAndRenderRanking(name, time) {
+            try {
+                let response = await fetch(WEB_APP_URL + `?action=save&name=${encodeURIComponent(name)}&time=${time}`);
+                let ranks = await response.json();
                 
-                let isCurrentPlayer = (r.name === playerName && r.time === timeElapsed) ? 'background:#DBEAFE; font-weight:bold;' : '';
+                let html = '';
+                ranks.forEach((r, idx) => {
+                    let m = String(Math.floor(r.time / 60)).padStart(2, '0');
+                    let s = String(r.time % 60).padStart(2, '0');
+                    let medal = '';
+                    if(idx === 0) medal = '🥇';
+                    else if(idx === 1) medal = '🥈';
+                    else if(idx === 2) medal = '🥉';
+                    else medal = `<span style="display:inline-block; width:1.5em; text-align:center;">${idx+1}</span>`;
+                    
+                    let isCurrentPlayer = (r.name === name && r.time === time) ? 'background:#DBEAFE; font-weight:bold;' : '';
 
-                html += `<li style="border-bottom:1px solid #BFDBFE; padding:10px; display:flex; justify-content:space-between; border-radius:5px; ${isCurrentPlayer}">
-                            <span>${medal} <strong>${r.name}</strong></span>
-                            <span style="color:#4B5563;">${m}:${s}</span>
-                         </li>`;
-            });
-            document.getElementById('ranking-list').innerHTML = html;
+                    html += `<li style="border-bottom:1px solid #BFDBFE; padding:10px; display:flex; justify-content:space-between; border-radius:5px; ${isCurrentPlayer}">
+                                <span>${medal} <strong>${r.name}</strong></span>
+                                <span style="color:#4B5563;">${m}:${s}</span>
+                             </li>`;
+                });
+                document.getElementById('ranking-list').innerHTML = html;
+            } catch(e) {
+                console.error("서버 통신 에러", e);
+                document.getElementById('ranking-list').innerHTML = "<li>서버 통신에 실패했습니다. (인터넷 연결을 확인해주세요)</li>";
+            }
         }
 
         // 랭킹 초기화 기능 삭제됨
