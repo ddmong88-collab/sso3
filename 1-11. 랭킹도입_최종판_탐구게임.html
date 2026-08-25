@@ -269,7 +269,11 @@
         async function updateTicker() {
             try {
                 let response = await fetch(WEB_APP_URL + "?action=get");
-                let ranks = await response.json();
+                let rawRanks = await response.json();
+                
+                // 시트 헤더(name)나 잘못된 값이 들어온 경우 필터링
+                let ranks = rawRanks.filter(r => r.name && r.name.toLowerCase() !== "name" && r.name !== "이름" && !isNaN(r.time) && r.time > 0);
+                
                 if(ranks.length === 0) {
                     document.getElementById('ticker-text').innerText = "🏆 아직 랭킹이 없습니다. 1위의 주인공이 되어보세요!";
                     return;
@@ -633,7 +637,10 @@
         async function saveAndRenderRanking(name, time) {
             try {
                 let response = await fetch(WEB_APP_URL + `?action=save&name=${encodeURIComponent(name)}&time=${time}`);
-                let ranks = await response.json();
+                let rawRanks = await response.json();
+                
+                // 시트 헤더(name)나 잘못된 값이 들어온 경우 필터링
+                let ranks = rawRanks.filter(r => r.name && r.name.toLowerCase() !== "name" && r.name !== "이름" && !isNaN(r.time) && r.time > 0);
                 
                 let html = '';
                 ranks.forEach((r, idx) => {
