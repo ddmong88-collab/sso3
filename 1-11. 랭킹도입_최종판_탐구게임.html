@@ -74,13 +74,20 @@
         .flip-card.matched .flip-card-back { border-color: #10B981; background-color: #ECFDF5; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
 
         /* 타이머 둥둥 떠있기 */
-        #timer-display { position:fixed; top:20px; right:20px; font-size:1.5rem; font-weight:bold; color:#1E3A8A; background:white; padding:10px 20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); display:none; z-index:1000; border:2px solid #BFDBFE; }
+        #timer-display { position:fixed; top:50px; right:20px; font-size:1.5rem; font-weight:bold; color:#1E3A8A; background:white; padding:10px 20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); display:none; z-index:1000; border:2px solid #BFDBFE; }
     </style>
 </head>
 <body>
 
     <!-- 고정 타이머 -->
     <div id="timer-display">⏱️ 00:00</div>
+
+    <!-- 실시간 랭킹 티커 (상단 팝업 바) -->
+    <div id="live-ranking-ticker" style="position:fixed; top:0; left:0; width:100%; background:#1E3A8A; color:white; padding:10px 0; z-index:2000; overflow:hidden; display:none; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
+        <marquee behavior="scroll" direction="left" scrollamount="6" id="ticker-text" style="font-size:1.1rem; font-weight:bold; letter-spacing:1px;">
+            <!-- JS에서 내용 주입 -->
+        </marquee>
+    </div>
 
     <!-- START SCREEN -->
     <div id="start-screen" class="container active" style="margin-top: 10vh;">
@@ -242,14 +249,35 @@
             document.getElementById('start-screen').classList.remove('active');
             document.getElementById('level-1').classList.add('active');
             
-            // 타이머 시작
+            // 타이머 및 랭킹 티커 시작
             document.getElementById('timer-display').style.display = 'block';
+            document.getElementById('live-ranking-ticker').style.display = 'block';
+            updateTicker(); // 랭킹 텍스트 갱신
+
             timerInterval = setInterval(() => {
                 timeElapsed++;
                 let m = String(Math.floor(timeElapsed / 60)).padStart(2, '0');
                 let s = String(timeElapsed % 60).padStart(2, '0');
                 document.getElementById('timer-display').innerText = `⏱️ ${m}:${s}`;
             }, 1000);
+        }
+
+        // 실시간 랭킹 티커 업데이트 로직
+        function updateTicker() {
+            let ranks = JSON.parse(localStorage.getItem('science_ranks') || '[]');
+            if(ranks.length === 0) {
+                document.getElementById('ticker-text').innerText = "🏆 아직 등록된 랭킹이 없습니다. 가장 먼저 전설의 탐구 마스터가 되어보세요! 🏆";
+                return;
+            }
+            let text = "🔥 [명예의 전당 Live] ";
+            ranks.slice(0, 10).forEach((r, idx) => {
+                let m = String(Math.floor(r.time / 60)).padStart(2, '0');
+                let s = String(r.time % 60).padStart(2, '0');
+                let medal = idx === 0 ? '🥇1위' : idx === 1 ? '🥈2위' : idx === 2 ? '🥉3위' : `${idx+1}위`;
+                text += ` ｜ ${medal}: ${r.name} (${m}:${s})`;
+            });
+            text += " ｜ 과연 다음 마스터는 누가 될 것인가?! 🔥";
+            document.getElementById('ticker-text').innerText = text;
         }
 
         // --- SVG Generators ---
