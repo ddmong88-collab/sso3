@@ -914,13 +914,14 @@ body {
       <div>
         <strong>[오프라인 상자 비밀번호 획득!]</strong><br>
         자물쇠 비밀번호: <strong style="color:var(--teal);font-size:20px;font-family:'JetBrains Mono'">312</strong><br>
-        비밀번호로 <strong>오프라인 상자를 열어 증거를 확인하고 연구 윤리에 어긋난 부분을 찾으세요!</strong>
+        비밀번호로 <strong>오프라인 상자를 열어 증거를 확인하고 연구 윤리에 어긋난 부분을 찾으세요!</strong><br>
+        <span style="font-size:12.5px;opacity:0.85">막히면 선생님께 <strong>힌트 카드</strong>를 요청하세요.</span>
       </div>
     </div>
 
     <!-- Final M1 Code Submit -->
     <div class="lock-area" id="lock-area-1">
-      <input class="lock-input" id="input-lock-1" placeholder="찾아낸 결함 코드/수치 입력" maxlength="10">
+      <input class="lock-input" id="input-lock-1" placeholder="계산해서 찾아낸 값(숫자) 입력" maxlength="10">
       <button class="btn-unlock" onclick="unlockMission1()">입력 승인 🔓</button>
     </div>
 
@@ -1368,7 +1369,7 @@ function unlockMission1() {
     toast('🎉 미션 1 완료! 미션 2로 이동합니다.');
     setTimeout(() => switchMission(2), 1200);
   } else {
-    toast('❌ 올바른 결함 코드가 아닙니다. 오프라인 상자 속 원본 증거와 계산식을 확인하세요.');
+    toast('❌ 값이 맞지 않습니다. 원본 기록지와 보고서를 다시 비교해 보세요. 막히면 선생님께 힌트 카드를 요청하세요.');
   }
 }
 
