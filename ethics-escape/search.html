@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Scholar 한국학술정보 DB 검색 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600;700&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #1e3a8a;
+  --primary-hover: #172554;
+  --secondary: #0284c7;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --border-dark: #cbd5e1;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* Header */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.brand-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-icon {
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 6px 12px;
+  border-radius: 6px;
+  letter-spacing: -0.05em;
+}
+.brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.03em;
+}
+.brand-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* Main Container */
+.container {
+  max-width: 960px;
+  margin: 36px auto;
+  padding: 0 20px;
+}
+
+/* Search Bar Area */
+.search-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  margin-bottom: 28px;
+}
+.search-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.search-input-group {
+  display: flex;
+  gap: 10px;
+}
+.search-input {
+  flex: 1;
+  padding: 14px 18px;
+  font-size: 15px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.search-input:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+.search-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.search-btn:hover {
+  background: var(--primary-hover);
+}
+
+/* Results Area */
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.result-count {
+  color: var(--secondary);
+}
+
+.paper-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.paper-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+.paper-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 6px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.paper-meta {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.paper-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.paper-abstract {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.7;
+  font-family: 'Noto Serif KR', serif;
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border-left: 3px solid var(--border-dark);
+}
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+/* 404 Hallucination Alert */
+.not-found-card {
+  background: var(--danger-bg);
+  border: 2px dashed var(--danger);
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+}
+.not-found-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.not-found-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+.not-found-desc {
+  font-size: 14px;
+  color: #991b1b;
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 auto 16px;
+}
+.hallucination-clue {
+  background: #ffffff;
+  border: 1.5px solid #f87171;
+  padding: 14px 20px;
+  border-radius: 8px;
+  display: inline-block;
+  font-size: 14px;
+  color: #7f1d1d;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+}
+.hallucination-clue strong {
+  color: var(--danger);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand-area">
+    <div class="logo-icon">K-DB</div>
+    <div>
+      <div class="brand-title">K-Scholar 한국학술정보 DB 시스템</div>
+      <div class="brand-subtitle">공공 학술 연구정보 및 국내외 공인 등재지 통합 검색 포털</div>
+    </div>
+  </div>
+  <div class="auth-status">
+    <span>🔒</span>
+    <span>연구윤리 특별감사 세션 인증됨</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Search Card -->
+  <div class="search-card">
+    <div class="search-label">
+      <span>🔎</span>
+      <span>연구 논문 실존 여부 및 서지정보 검색</span>
+    </div>
+    <div class="search-input-group">
+      <input type="text" class="search-input" id="search-input" placeholder="참고문헌의 저자명, 논문 제목, 또는 학술지명을 입력하세요." onkeypress="handleEnter(event)">
+      <button class="search-btn" onclick="doSearch()">
+        <span>검색</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Area -->
+  <div class="results-header" id="results-header">
+    <div>검색 결과: <span class="result-count" id="result-count">전체 5편의 문헌이 검색 가능합니다</span></div>
+  </div>
+
+  <div id="results-list"></div>
+
+</div>
+
+<script>
+// Mock Academic Papers Database (100% Authentic Peer-Reviewed Literature)
+const PAPERS = [
+  {
+    id: 1,
+    title: "수질오염공정시험기준: 담수 생물(물벼룩)을 이용한 급성독성 시험방법 (ES 04704.1b)",
+    authors: "국립환경과학원 물환경공학연구과",
+    journal: "국립환경과학원 고시",
+    year: "2021",
+    vol: "ES 04704.1b",
+    pages: "pp. 1-16",
+    abstract: "본 공정시험기준은 담수 생태계 1차 소비자인 물벼룩(Daphnia magna)을 표준 시험 생물종으로 선정하여 산업 폐수 및 환경 유입 오염물질에 대한 반수영향농도(EC50)와 심장박동수 등 생리적 지표를 정량 측정하는 국가 공인 시험 절차를 규정한다.",
+    verified: true
+  },
+  {
+    id: 2,
+    title: "Microplastics as contaminants in the marine environment: A review",
+    authors: "Cole, M., Lindeque, P., Halsband, C., & Galloway, T. S.",
+    journal: "Marine Pollution Bulletin",
+    year: "2011",
+    vol: "Vol. 62, Issue 12",
+    pages: "pp. 2588-2597",
+    abstract: "This seminal paper reviews the global distribution, bioavailability, and biological impact of microscopic polymer debris (1-5000 µm) in aquatic environments. Feeding trials demonstrate microplastic ingestion by zooplankton leads to intestinal blockages, decreased feeding, and reproductive declines.",
+    verified: true
+  },
+  {
+    id: 3,
+    title: "Polystyrene nanoplastics inhibit reproduction and induce abnormal embryonic development in the freshwater crustacean Daphnia galeata",
+    authors: "Cui, R., Kim, S. W., & An, Y. J.",
+    journal: "Scientific Reports",
+    year: "2017",
+    vol: "Vol. 7",
+    pages: "Article No. 12095",
+    abstract: "This study demonstrates that polystyrene nanoplastics penetrate into the digestive system and brood pouch of Daphnia, causing embryo lethality and substantial reduction of lipid droplets required for normal embryonic development.",
+    verified: true
+  },
+  {
+    id: 4,
+    title: "Nanoplastic affects growth of S. obliquus and reproduction of D. magna",
+    authors: "Besseling, E., Wang, B., Lürling, M., & Koelmans, A. A.",
+    journal: "Environmental Science & Technology",
+    year: "2014",
+    vol: "Vol. 48, Issue 20",
+    pages: "pp. 12336-12343",
+    abstract: "Exposure experiments on neonate Daphnia magna with fluorescent polystyrene nanoparticles revealed severe reduction of body size, thoracic appendage movement suppression, and dose-dependent neonate malformations.",
+    verified: true
+  },
+  {
+    id: 5,
+    title: "Short-term exposure with high concentrations of pristine microplastic particles leads to immobilisation of Daphnia magna",
+    authors: "Rehse, S., Kloas, W., & Zarfl, C.",
+    journal: "Chemosphere",
+    year: "2016",
+    vol: "Vol. 153",
+    pages: "pp. 91-99",
+    abstract: "This study exposed the freshwater crustacean Daphnia magna to high concentrations of pristine microplastic particles for a short period and examined the effect on swimming ability (immobilisation), as a basis for assessing the physical effects of microplastics on freshwater zooplankton.",
+    verified: true
+  },
+  {
+    id: 6,
+    title: "Test No. 202: Daphnia sp. Acute Immobilisation Test",
+    authors: "OECD (Organisation for Economic Co-operation and Development)",
+    journal: "OECD Guidelines for the Testing of Chemicals, Section 2",
+    year: "2004",
+    vol: "Section 2: Effects on Biotic Systems",
+    pages: "pp. 1-12",
+    abstract: "This internationally recognized guideline outlines the definitive procedure for assessing acute toxicity of chemical substances using young daphnids (Daphnia magna Straus), recording immobilisation after 24 and 48 hours of exposure.",
+    verified: true
+  },
+  {
+    id: 7,
+    title: "Methods in Agricultural Chemical Analysis: A Practical Handbook",
+    authors: "Faithfull, N. T.",
+    journal: "CABI Publishing (Wallingford, UK)",
+    year: "2002",
+    vol: "ISBN 0-85199-608-6",
+    pages: "xxii + 266 pp.",
+    abstract: "A practical handbook of standard laboratory methods for chemical analysis in agricultural and environmental testing, covering sample preparation, analytical procedures and quality control.",
+    verified: true
+  }
+  // NOTICE: Reference [5] Watson & Thorne (2024) Nature BioScience International is 100% FAKE / AI Hallucination and INTENTIONALLY OMITTED to produce 404 NOT FOUND!
+];
+
+function handleEnter(e) {
+  if (e.key === 'Enter') doSearch();
+}
+
+function quickSearch(txt) {
+  document.getElementById('search-input').value = txt;
+  doSearch();
+}
+
+function doSearch() {
+  const query = document.getElementById('search-input').value.trim().toLowerCase();
+  const resList = document.getElementById('results-list');
+  const countEl = document.getElementById('result-count');
+
+  if (!query) {
+    showAllPapers();
+    return;
+  }
+
+  // Check if searching for the missing fake paper!
+  // Any distinctive part of the fake reference [5] (author, journal, or title) leads to the 404 page
+  const FAKE_KEYWORDS = [
+    'watson', 'thorne', 'nature bioscience', 'bioscience international',
+    'ai-driven', 'ecotoxicological', 'microplastic mortality', 'freshwater ecosystems',
+    '왓슨'
+  ];
+  if (FAKE_KEYWORDS.some(k => query.includes(k))) {
+    countEl.innerHTML = '<span style="color:var(--danger)">0건 (검색 불가)</span>';
+    resList.innerHTML = `
+      <div class="not-found-card">
+        <div class="not-found-icon">🚫</div>
+        <div class="not-found-title">404 NOT FOUND : 미등록 학술 문헌</div>
+        <div class="not-found-desc">
+          요청하신 논문 [<strong>Watson & Thorne, Nature BioScience International</strong>]을 데이터베이스에서 찾을 수 없습니다.<br>
+          K-Scholar, Web of Science, Scopus, PubMed 등 국내외 공인 학술 등재 시스템에 등록되지 않은 서지 정보입니다.
+        </div>
+        <div class="hallucination-clue">
+          ⚠️ <strong>[문헌 검색 오류 알림]</strong><br>
+          참고문헌 목록에 기재된 논문 중 실제 학술 DB에서 전혀 검색되지 않는 이 논문의 <strong>[발행연도 4자리]</strong>를 방탈출 통합 터미널에 입력하여 정밀 검증을 완료하세요!
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Filter existing papers
+  const filtered = PAPERS.filter(p => 
+    p.title.toLowerCase().includes(query) ||
+    p.authors.toLowerCase().includes(query) ||
+    p.journal.toLowerCase().includes(query)
+  );
+
+  countEl.textContent = `검색 결과 ${filtered.length}건`;
+
+  if (filtered.length === 0) {
+    resList.innerHTML = `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:32px;text-align:center;color:var(--text-muted)">
+        검색된 문헌이 없습니다. 검색어 철자를 확인하거나 참고문헌의 저자명을 검색해 보세요.
+      </div>
+    `;
+    return;
+  }
+
+  renderPapers(filtered);
+}
+
+function showAllPapers() {
+  document.getElementById('result-count').textContent = `전체 ${PAPERS.length}편의 검증 문헌 열람 가능`;
+  renderPapers(PAPERS);
+}
+
+function renderPapers(list) {
+  const container = document.getElementById('results-list');
+  container.innerHTML = list.map(p => `
+    <div class="paper-item">
+      <div class="paper-title">${p.title}</div>
+      <div class="paper-meta">
+        <span>✍️ ${p.authors}</span>
+        <span>📖 ${p.journal}</span>
+        <span>📅 ${p.year}년</span>
+        <span>📑 ${p.vol}, ${p.pages}</span>
+      </div>
+      <div class="paper-abstract">
+        <strong>[초록]</strong> ${p.abstract}
+      </div>
+      <div>
+        <span class="verified-badge">✓ K-Scholar 공인 등재 학술지 인증</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Initial View
+showAllPapers();
+</script>
+
+</body>
+</html>

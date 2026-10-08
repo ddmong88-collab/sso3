@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>도입 | 모의 윤리 판정기 - 과학탐구실험</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-database-compat.min.js"></script>
+<style>
+:root {
+  --bg: #0d1b2a;
+  --surface: #1a2d42;
+  --card: #1e3454;
+  --card2: #243b55;
+  --border: #2a4060;
+  --border2: #335070;
+  --text: #e8f0f8;
+  --text2: #8faec8;
+  --text3: #5a7a9a;
+  --teal: #2dd4bf;
+  --teal-lt: #5eead4;
+  --teal-dim: rgba(45,212,191,0.13);
+  --amber: #f59e0b;
+  --amber-lt: #fbbf24;
+  --amber-dim: rgba(245,158,11,0.13);
+  --red: #ef4444;
+  --red-lt: #f87171;
+  --red-dim: rgba(239,68,68,0.13);
+  --green: #22c55e;
+  --green-lt: #4ade80;
+  --green-dim: rgba(34,197,94,0.13);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; padding: 4px 10px;
+  border-radius: 20px; background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal);
+}
+.topbar-title { font-size: 15px; font-weight: 700; color: var(--text); margin-left: 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif; cursor: pointer; border: none; transition: all 0.15s;
+}
+.btn-primary { background: var(--teal); color: #0d1b2a; }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-amber { background: var(--amber); color: #0d1b2a; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--surface); color: var(--text); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.form-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 6px; display: block;
+}
+.form-input {
+  background: var(--surface); border: 1.5px solid var(--border2); color: var(--text);
+  font-size: 15px; padding: 11px 14px; border-radius: var(--radius-sm); outline: none; width: 100%;
+}
+.form-input:focus { border-color: var(--teal); }
+.form-input.mono {
+  font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700;
+  letter-spacing: 0.2em; text-align: center; text-transform: uppercase;
+}
+
+#screen-login {
+  align-items: center; justify-content: center; padding: 40px 20px;
+}
+.login-box {
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: 16px;
+  padding: 32px 28px; max-width: 420px; width: 100%; display: flex; flex-direction: column; gap: 18px;
+}
+.group-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.group-btn {
+  padding: 10px 4px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700;
+  cursor: pointer; border: 2px solid transparent; text-align: center; background: var(--surface); color: var(--text);
+}
+.group-btn.selected { border-color: currentColor; filter: brightness(1.2); }
+
+.vote-container {
+  max-width: 780px; width: 100%; margin: 0 auto; padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+.scenario-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.scenario-header {
+  padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.scenario-tag {
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+  background: var(--teal-dim); color: var(--teal);
+}
+.scenario-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.scenario-text {
+  font-size: 14px; line-height: 1.8; color: var(--text); background: rgba(0,0,0,0.2);
+  padding: 14px 16px; border-radius: var(--radius-sm); border-left: 3px solid var(--teal);
+}
+.scenario-question { font-size: 14px; font-weight: 700; color: var(--amber-lt); }
+
+.vote-actions { display: flex; gap: 12px; }
+.vote-btn {
+  flex: 1; padding: 14px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
+  cursor: pointer; border: 2px solid var(--border2); background: var(--surface); color: var(--text);
+  text-align: center; transition: all 0.15s;
+}
+.vote-btn:hover { border-color: var(--teal); }
+.vote-btn.selected-yes { border-color: var(--red); background: var(--red-dim); color: var(--red-lt); }
+.vote-btn.selected-no { border-color: var(--green); background: var(--green-dim); color: var(--green-lt); }
+
+.vote-progress { margin-top: 6px; }
+.vote-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.vote-track { height: 10px; background: var(--surface); border-radius: 5px; overflow: hidden; display: flex; }
+.vote-bar-yes { height: 100%; background: var(--red); width: 0%; transition: width 0.4s; }
+.vote-bar-no { height: 100%; background: var(--green); width: 0%; transition: width 0.4s; }
+
+.insight-reveal {
+  padding: 14px 16px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.7;
+  display: none; margin-top: 8px;
+}
+.insight-reveal.show { display: block !important; }
+.insight-reveal.correct-yes { background: var(--red-dim); border: 1px solid var(--red); color: #fecaca; }
+.insight-reveal.correct-no { background: var(--green-dim); border: 1px solid var(--green); color: #dcfce7; }
+
+.teacher-wrap {
+  max-width: 900px; width: 100%; margin: 0 auto; padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.t-header-card {
+  background: var(--amber-dim); border: 1px solid var(--amber); border-radius: var(--radius);
+  padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;
+}
+.t-session-code { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; color: var(--amber); }
+
+.t-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.t-section-header {
+  padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.t-section-body { padding: 18px 20px; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);
+}
+.modal-box {
+  background: var(--card); border: 1.5px solid var(--amber); border-radius: 16px;
+  padding: 28px 24px; max-width: 360px; width: 100%; display: flex; flex-direction: column; gap: 16px;
+}
+.hidden { display: none !important; }
+.toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999; }
+.toast {
+  background: var(--card); border: 1px solid var(--teal); border-radius: 8px;
+  padding: 10px 20px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* Mobile (phones) */
+@media (max-width: 600px) {
+  .topbar { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
+  .topbar-title { font-size: 13px; margin-left: 6px; }
+  .vote-container { padding: 16px 12px; gap: 16px; }
+  .scenario-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .scenario-body { padding: 14px 14px; }
+  .vote-actions { flex-direction: column; }
+  .login-box { padding: 24px 18px; }
+  .teacher-wrap { padding: 16px 12px; }
+  .t-header-card { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px 16px; }
+  #t-summary-cards { grid-template-columns: 1fr !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- TEACHER LOGIN MODAL -->
+<div class="modal-overlay hidden" id="teacher-modal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:16px;color:var(--amber)">👩‍🏫 교사 대시보드 입장</h3>
+      <button onclick="closeTeacherModal()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">수업 세션 코드</label>
+      <input class="form-input mono" id="t-session-in" maxlength="5" placeholder="ABCDE" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">교사 비밀번호</label>
+      <input class="form-input" id="t-pin-in" type="password" placeholder="PIN 입력">
+    </div>
+    <div id="t-login-error" style="color:var(--red);font-size:12px;min-height:16px"></div>
+    <button class="btn btn-amber btn-block" onclick="doTeacherLogin()">대시보드 시작</button>
+  </div>
+</div>
+
+<!-- 1. LOGIN SCREEN -->
+<div class="screen active" id="screen-login">
+  <div class="login-box">
+    <div style="text-align:center">
+      <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">고등학교 1학년 과학탐구실험</div>
+      <h2 style="font-size:22px;font-weight:900;margin-bottom:4px">모의 윤리 판정기</h2>
+      <p style="font-size:13px;color:var(--text2)">연구 상황을 살펴보고 위반 여부를 투표해보세요</p>
+    </div>
+
+    <div>
+      <label class="form-label">수업 세션 코드</label>
+      <input class="form-input mono" id="stu-session" maxlength="5" placeholder="ABCDE" oninput="this.value=this.value.toUpperCase()">
+    </div>
+
+    <div>
+      <label class="form-label">이름 또는 닉네임(별명)</label>
+      <input class="form-input" id="stu-name" placeholder="예: 김탐구 또는 탐구대장" maxlength="12">
+    </div>
+
+    <div>
+      <label class="form-label">모둠 선택</label>
+      <div class="group-grid">
+        <div class="group-btn" id="g1" onclick="selectGroup(1)" style="color:#FFD700">1조</div>
+        <div class="group-btn" id="g2" onclick="selectGroup(2)" style="color:#90EE90">2조</div>
+        <div class="group-btn" id="g3" onclick="selectGroup(3)" style="color:#FF7F7F">3조</div>
+        <div class="group-btn" id="g4" onclick="selectGroup(4)" style="color:#87CEEB">4조</div>
+        <div class="group-btn" id="g5" onclick="selectGroup(5)" style="color:#DDA0DD">5조</div>
+        <div class="group-btn" id="g6" onclick="selectGroup(6)" style="color:#FFB347">6조</div>
+        <div class="group-btn" id="g7" onclick="selectGroup(7)" style="color:#FFB6C1">7조</div>
+        <div class="group-btn" id="g8" onclick="selectGroup(8)" style="color:#98FF98">8조</div>
+      </div>
+    </div>
+
+    <div id="stu-login-err" style="color:var(--red);font-size:12px;min-height:16px;text-align:center"></div>
+    <button class="btn btn-primary btn-block" id="btn-login" onclick="doStudentLogin()">투표 참여하기 🚀</button>
+
+    <div style="text-align:center;margin-top:10px">
+      <span onclick="openTeacherModal()" style="font-size:12px;color:var(--text3);text-decoration:underline;cursor:pointer">👩‍🏫 교사로 입장하기</span>
+    </div>
+  </div>
+</div>
+
+<!-- 2. STUDENT SCREEN -->
+<div class="screen" id="screen-student">
+  <div class="topbar">
+    <div style="display:flex;align-items:center">
+      <span class="topbar-badge">도입 활동</span>
+      <span class="topbar-title">연구 &amp; AI 윤리 모의 판정</span>
+    </div>
+    <div id="stu-status-bar" style="font-size:12px;color:var(--text2)"></div>
+  </div>
+
+  <div class="vote-container" id="vote-container"></div>
+
+  <div style="max-width:780px;margin:0 auto;width:100%;padding:0 20px 30px">
+    <button class="btn btn-primary btn-block" id="btn-submit-vote" onclick="submitFinalVotes()">투표 최종 제출 완료</button>
+  </div>
+</div>
+
+<!-- 3. TEACHER DASHBOARD SCREEN -->
+<div class="screen" id="screen-teacher">
+  <div class="topbar">
+    <div style="display:flex;align-items:center">
+      <span class="topbar-badge" style="background:var(--amber-dim);border-color:var(--amber);color:var(--amber)">교사 대시보드</span>
+      <span class="topbar-title">연구윤리 도입 수업 관제</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="openProjectionWindow()">📽 프로젝션 화면 열기</button>
+      <button class="btn btn-ghost btn-sm" onclick="location.reload()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="teacher-wrap">
+    <div class="t-header-card">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase">현재 세션 코드</div>
+        <div class="t-session-code" id="t-code-disp">-----</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">학생들에게 위 코드를 안내하여 접속하게 하세요.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn btn-amber btn-sm" id="btn-reveal-toggle" onclick="toggleRevealAnswers()">📢 정답 및 해설 공개 토글</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetAllVotes()">↺ 투표 데이터 초기화</button>
+      </div>
+    </div>
+
+    <div class="t-section">
+      <div class="t-section-header">
+        <span style="font-weight:700">👥 실시간 접속 학생 (<span id="t-student-cnt">0</span>명) · 최종 제출 <span id="t-submitted-cnt">0</span>명</span>
+      </div>
+      <div class="t-section-body" id="t-student-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+
+    <div class="t-section">
+      <div class="t-section-header">
+        <span style="font-weight:700">📊 연구·AI 윤리 딜레마 투표 현황 요약</span>
+      </div>
+      <div class="t-section-body" id="t-summary-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDa7GPfWb1PnWRLfu6C1y19MS_gxe9NipA",
+  authDomain: "science-research-ethics.firebaseapp.com",
+  databaseURL: "https://science-research-ethics-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "science-research-ethics",
+  storageBucket: "science-research-ethics.firebasestorage.app",
+  messagingSenderId: "658411937251",
+  appId: "1:658411937251:web:ac61054ea40bc07a05d4d6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const SCENARIOS = [
+  {
+    id: "sc_forgery",
+    tag: "연구윤리 1 : 데이터 변조/위조",
+    title: "실험 실패값의 선택적 제외 딜레마",
+    text: "천연 항균 물질 실험을 5회 반복했는데, 1~4회는 항균 효과가 뚜렷했으나 5회차에서만 효과가 전혀 나타나지 않았다. 보고서 제출 마감을 앞두고 학생은 '5회차는 실험 기구 세척에 문제가 있었을 것'이라고 추정하여 5회차 데이터를 제외하고 1~4회차 결과의 평균만으로 결론을 작성하였다.",
+    question: "이 학생의 행동은 연구 윤리(진실성) 위반에 해당할까요?",
+    correctAns: "yes",
+    badge: "⚠️ 위반이다 (데이터 변조)",
+    insight: "실험 결과를 본 후 불리한 데이터를 임의로 배제하는 것은 명백한 <strong>변조(Falsification) 및 체리피킹(Cherry-picking)</strong>입니다. 오차나 실패 원인이 명확히 입증되지 않았다면 모든 결과를 투명하게 기술하고 토의에서 한계점으로 다루어야 합니다."
+  },
+  {
+    id: "sc_ai_write",
+    tag: "AI윤리 1 : 생성형 AI 표절 & 사용 미표시",
+    title: "AI 작성 서론 문장 그대로 복사 딜레마",
+    text: "탐구 보고서의 서론 작성이 막막했던 학생은 생성형 AI에게 '고등학교 수준의 천연 항균 물질에 관한 서론 문단을 써줘'라고 프롬프트를 입력했다. AI가 작성해 준 매끄러운 3개 문단을 읽어보고 마음에 들어 그대로 복사하여 보고서 서론에 붙여넣었고, AI를 사용했다는 표기는 따로 남기지 않았다.",
+    question: "이 학생의 행동은 연구/AI 윤리 위반에 해당할까요?",
+    correctAns: "yes",
+    badge: "⚠️ 위반이다 (AI 표절 & 사용 미표시)",
+    insight: "AI가 생성한 텍스트를 자신이 작성한 것처럼 속이고 출처(AI 도구 및 프롬프트)를 명시하지 않는 것은 <strong>표절(Plagiarism) 및 정직성 위반</strong>입니다. AI를 아이디어 도출에 활용할 수 있으나, 출처를 투명하게 밝히고 본인의 문장으로 재해석·검증해야 합니다."
+  },
+  {
+    id: "sc_ai_hallu",
+    tag: "AI윤리 2 : AI 환각 & 출처 미확인",
+    title: "AI가 추천해 준 그럴듯한 참고문헌 인용 딜레마",
+    text: "보고서의 신뢰도를 높이기 위해 AI에게 '관련 최신 학술 논문 3편을 추천해줘'라고 요청했다. AI가 저자명, 연도, 학술지 이름까지 그럴듯하게 적어준 논문 목록을 원문 검색이나 확인 없이 그대로 자신의 보고서 [참고문헌] 목록에 추가하여 제출하였다.",
+    question: "이 학생의 행동은 연구/AI 윤리 위반에 해당할까요?",
+    correctAns: "yes",
+    badge: "⚠️ 위반이다 (출처 미확인 & 허위 인용)",
+    insight: "생성형 AI는 존재하지 않는 가짜 논문이나 저자를 그럴듯하게 꾸며내는 <strong>'AI 환각(Hallucination)'</strong>을 자주 일으킵니다. 연구자가 원문을 직접 확인하지 않고 허위 문헌을 인용하는 것은 연구의 신뢰성을 파괴하는 중대한 부정행위입니다."
+  },
+  {
+    id: "sc_author",
+    tag: "연구윤리 2 : 부당한 저자 표시",
+    title: "모둠 탐구 보고서 이름 올리기 딜레마",
+    text: "4인 1조 탐구 활동 중, 조원 A는 수행평가 기간 내내 개인 사정으로 실험과 보고서 작성에 전혀 참여하지 않고 간식만 사 왔다. 하지만 같은 반 친구이자 친한 사이였기에 보고서 표지의 '공동 연구자' 명단에 A의 이름을 제외하지 않고 그대로 함께 넣어 제출하였다.",
+    question: "이 행동은 연구 윤리 위반에 해당할까요?",
+    correctAns: "yes",
+    badge: "⚠️ 위반이다 (부당한 저자 표시)",
+    insight: "연구의 착상, 설계, 실험, 데이터 분석, 논문 작성 등에 <strong>실질적인 기여를 하지 않은 사람을 저자로 올리는 것은 '부당한 저자 표시(Gift/Guest Authorship)'</strong>로 연구윤리 위반입니다. 기여가 미미한 경우 본문 말미의 '감사의 글(Acknowledgement)'에 기재하는 것이 원칙입니다."
+  },
+  {
+    id: "sc_ai_proof",
+    tag: "AI윤리 3 : AI 활용의 투명한 공개",
+    title: "맞춤법 점검에 AI를 쓰고 사실대로 밝힌 딜레마",
+    text: "탐구 보고서의 내용·아이디어·데이터 분석은 모두 직접 했다. 완성한 문장의 맞춤법과 띄어쓰기만 생성형 AI로 점검해 고쳤고, 보고서 마지막의 '도움 받은 내용' 란에 '맞춤법 점검에 생성형 AI 도구를 사용함'이라고 직접 밝혀 두었다.",
+    question: "이 학생의 행동은 연구/AI 윤리 위반에 해당할까요?",
+    correctAns: "no",
+    badge: "✅ 위반이 아니다 (투명한 공개 + 본인의 기여)",
+    insight: "AI를 도구로 쓰는 것 자체가 위반은 아닙니다. 핵심은 <strong>① 연구의 내용과 판단을 본인이 직접 했는지, ② AI를 사용한 사실과 범위를 투명하게 밝혔는지</strong>입니다. 다만 과제나 학교의 AI 사용 규정이 있다면 그 허용 범위를 먼저 확인해야 합니다."
+  }
+];
+
+let state = {
+  role: 'student',
+  sessionCode: '',
+  sid: '',
+  name: '',
+  group: 0,
+  myVotes: {},
+  isSubmitted: false,
+  lastReset: undefined
+};
+
+// Student identity is kept in localStorage so a refresh does not create a duplicate student/vote set.
+const SAVE_KEY = 'ethics_student_v1';
+function saveIdentity() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ code: state.sessionCode, sid: state.sid, name: state.name, group: state.group }));
+  } catch (e) { /* storage may be blocked; the app still works without it */ }
+}
+function loadIdentity() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; }
+}
+function clearIdentity() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+}
+
+// "Permission denied" means the Firebase security rules block this app (not a typo or a network problem).
+function friendlyError(e) {
+  const msg = (e && e.message) ? e.message : String(e);
+  if (/permission/i.test(msg)) {
+    return 'Firebase 보안 규칙이 접근을 막고 있습니다. (선생님: Firebase 콘솔 → Realtime Database → 규칙 확인) [' + msg + ']';
+  }
+  return msg;
+}
+
+// Escape user-typed text before putting it into innerHTML (names are typed by students).
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function toast(msg) {
+  const w = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function selectGroup(g) {
+  state.group = g;
+  document.querySelectorAll('.group-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('g' + g).classList.add('selected');
+}
+
+function openTeacherModal() {
+  document.getElementById('teacher-modal').classList.remove('hidden');
+}
+function closeTeacherModal() {
+  document.getElementById('teacher-modal').classList.add('hidden');
+}
+
+async function doStudentLogin() {
+  const code = document.getElementById('stu-session').value.trim().toUpperCase();
+  const name = document.getElementById('stu-name').value.trim();
+  const errEl = document.getElementById('stu-login-err');
+
+  if (!code || code.length < 3) { errEl.textContent = '세션 코드를 올바르게 입력하세요.'; return; }
+  if (!name) { errEl.textContent = '이름 또는 닉네임을 입력하세요.'; return; }
+  if (!state.group) { errEl.textContent = '모둠을 선택하세요.'; return; }
+
+  const sid = 'user_' + Math.random().toString(36).substring(2, 7);
+
+  try {
+    const snap = await db.ref('ethics_sessions/' + code).get();
+    if (!snap.exists()) {
+      errEl.textContent = '존재하지 않는 세션 코드입니다. 선생님께 확인하세요.';
+      return;
+    }
+    await enterStudent(code, sid, name, state.group);
+  } catch(e) {
+    errEl.textContent = '접속 오류: ' + friendlyError(e);
+  }
+}
+
+// Shared by a fresh login and by restoring the saved identity after a refresh.
+async function enterStudent(code, sid, name, group) {
+  state.sessionCode = code;
+  state.sid = sid;
+  state.name = name;
+  state.group = group;
+  state.myVotes = {};
+  state.isSubmitted = false;
+  saveIdentity();
+
+  await db.ref(`ethics_sessions/${code}/students/${sid}`).set({
+    sid, name, group, joinedAt: Date.now()
+  });
+
+  // restore anything this student already did in this session (votes and the final submit)
+  const [votesSnap, submittedSnap] = await Promise.all([
+    db.ref(`ethics_sessions/${code}/votes`).get(),
+    db.ref(`ethics_sessions/${code}/submitted/${sid}`).get()
+  ]);
+  const allVotes = votesSnap.val() || {};
+  SCENARIOS.forEach(sc => {
+    const v = allVotes[sc.id] && allVotes[sc.id][sid];
+    if (v === 'yes' || v === 'no') state.myVotes[sc.id] = v;
+  });
+  state.isSubmitted = submittedSnap.val() === true;
+
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-student').classList.add('active');
+  document.getElementById('stu-status-bar').innerHTML =
+    `${esc(group)}조 | ${esc(name)} · <span onclick="leaveSession()" style="text-decoration:underline;cursor:pointer">나가기</span>`;
+
+  renderStudentScenarios();
+  listenFirebase();
+}
+
+function leaveSession() {
+  if (!confirm('이 세션에서 나갈까요? 처음 화면으로 돌아갑니다.')) return;
+  clearIdentity();
+  location.reload();
+}
+
+// After a refresh, silently re-enter the session this device was already in.
+async function tryRestoreStudent() {
+  const saved = loadIdentity();
+  if (!saved || !saved.code || !saved.sid) return;
+  try {
+    const snap = await db.ref('ethics_sessions/' + saved.code).get();
+    if (!snap.exists()) { clearIdentity(); return; }
+    await enterStudent(saved.code, saved.sid, saved.name, saved.group);
+  } catch (e) { /* offline or session gone: stay on the login screen */ }
+}
+
+async function doTeacherLogin() {
+  let code = document.getElementById('t-session-in').value.trim().toUpperCase();
+  const pin = document.getElementById('t-pin-in').value.trim();
+  const errEl = document.getElementById('t-login-error');
+
+  if (!code) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    code = Array.from({length:5}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+  }
+
+  if (pin !== '1234') { errEl.textContent = '교사 비밀번호가 일치하지 않습니다.'; return; }
+
+  state.sessionCode = code;
+  state.role = 'teacher';
+
+  try {
+    const snap = await db.ref('ethics_sessions/' + code).get();
+    if (!snap.exists()) {
+      await db.ref('ethics_sessions/' + code).set({
+        created: Date.now(),
+        revealed: false
+      });
+    }
+
+    closeTeacherModal();
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-teacher').classList.add('active');
+    document.getElementById('t-code-disp').textContent = code;
+
+    listenTeacherData();
+  } catch(e) {
+    errEl.textContent = '교사 로그인 오류: ' + friendlyError(e);
+  }
+}
+
+function renderStudentScenarios() {
+  const container = document.getElementById('vote-container');
+  container.innerHTML = '';
+
+  SCENARIOS.forEach(sc => {
+    const card = document.createElement('div');
+    card.className = 'scenario-card';
+    card.id = `sc-card-${sc.id}`;
+    card.innerHTML = `
+      <div class="scenario-header">
+        <span class="scenario-tag">${sc.tag}</span>
+        <span style="font-size:13px;font-weight:700">${sc.title}</span>
+      </div>
+      <div class="scenario-body">
+        <div class="scenario-text">${sc.text}</div>
+        <div class="scenario-question">❓ ${sc.question}</div>
+        <div class="vote-actions">
+          <div class="vote-btn" id="vbtn-yes-${sc.id}" onclick="castVote('${sc.id}', 'yes')">⚠️ 위반이다</div>
+          <div class="vote-btn" id="vbtn-no-${sc.id}" onclick="castVote('${sc.id}', 'no')">✅ 위반 아니다</div>
+        </div>
+        <div class="insight-reveal" id="insight-${sc.id}">
+          <div style="font-weight:700;margin-bottom:4px;color:var(--amber-lt)">${sc.badge}</div>
+          <div>${sc.insight}</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // a refresh (or a re-entry) must show what this student already chose / submitted
+  Object.keys(state.myVotes).forEach(id => paintVote(id, state.myVotes[id]));
+  if (state.isSubmitted) lockSubmittedUI(); else unlockSubmitUI();
+}
+
+function paintVote(scId, val) {
+  const btnYes = document.getElementById(`vbtn-yes-${scId}`);
+  const btnNo = document.getElementById(`vbtn-no-${scId}`);
+  if (!btnYes || !btnNo) return;
+  btnYes.classList.remove('selected-yes');
+  btnNo.classList.remove('selected-no');
+  if (val === 'yes') btnYes.classList.add('selected-yes');
+  if (val === 'no') btnNo.classList.add('selected-no');
+}
+
+function castVote(scId, val) {
+  if (state.isSubmitted) {
+    toast('이미 투표가 최종 제출되어 변경할 수 없습니다.');
+    return;
+  }
+  state.myVotes[scId] = val;
+  paintVote(scId, val);
+
+  // saved immediately so the teacher's live chart moves while students are still deciding
+  db.ref(`ethics_sessions/${state.sessionCode}/votes/${scId}/${state.sid}`).set(val);
+  toast('선택이 저장되었습니다.');
+}
+
+function lockSubmittedUI() {
+  document.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.style.cursor = 'default';
+    btn.style.pointerEvents = 'none';
+    if (!btn.classList.contains('selected-yes') && !btn.classList.contains('selected-no')) {
+      btn.style.opacity = '0.35';
+    }
+  });
+  const btn = document.getElementById('btn-submit-vote');
+  btn.disabled = true;
+  btn.style.background = 'var(--green)';
+  btn.style.color = '#0d1b2a';
+  btn.textContent = '🔒 투표 최종 제출 완료 (수정 불가)';
+}
+
+function unlockSubmitUI() {
+  document.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.style.cursor = '';
+    btn.style.pointerEvents = '';
+    btn.style.opacity = '';
+  });
+  const btn = document.getElementById('btn-submit-vote');
+  btn.disabled = false;
+  btn.style.background = '';
+  btn.style.color = '';
+  btn.textContent = '투표 최종 제출 완료';
+}
+
+async function submitFinalVotes() {
+  if (state.isSubmitted) return;
+  const missing = SCENARIOS.filter(s => !state.myVotes[s.id]);
+  if (missing.length > 0) {
+    toast(`아직 ${missing.length}개 항목을 선택하지 않았습니다.`);
+    return;
+  }
+
+  if (!confirm('투표를 최종 제출하시겠습니까? 제출 후에는 의견을 수정할 수 없습니다.')) return;
+
+  try {
+    // make sure every choice is stored, then mark this student as submitted for the teacher's counter
+    await Promise.all(SCENARIOS.map(sc =>
+      db.ref(`ethics_sessions/${state.sessionCode}/votes/${sc.id}/${state.sid}`).set(state.myVotes[sc.id])));
+    await db.ref(`ethics_sessions/${state.sessionCode}/submitted/${state.sid}`).set(true);
+  } catch (e) {
+    toast('제출에 실패했습니다. 네트워크를 확인하고 다시 눌러 주세요.');
+    return;
+  }
+
+  state.isSubmitted = true;
+  lockSubmittedUI();
+  toast('🎉 모든 투표가 확정되었습니다! 선생님의 화면을 주목하세요.');
+}
+
+// The teacher can reset the whole session; unlock this student's screen when that happens.
+function localResetVotes() {
+  state.myVotes = {};
+  state.isSubmitted = false;
+  renderStudentScenarios();
+  toast('선생님이 투표를 초기화했습니다. 다시 선택해 주세요.');
+}
+
+function listenFirebase() {
+  db.ref(`ethics_sessions/${state.sessionCode}/resetAt`).on('value', snap => {
+    const v = snap.val();
+    if (state.lastReset === undefined) { state.lastReset = v; return; }  // first callback = current value, not a reset
+    if (v !== state.lastReset) { state.lastReset = v; localResetVotes(); }
+  });
+
+  db.ref(`ethics_sessions/${state.sessionCode}/revealed`).on('value', snap => {
+    const revealed = snap.val() === true;
+    SCENARIOS.forEach(sc => {
+      const insEl = document.getElementById(`insight-${sc.id}`);
+      if (insEl) {
+        if (revealed) {
+          const ans = sc.correctAns || sc.correct || 'yes';
+          insEl.className = 'insight-reveal show ' + (ans === 'yes' ? 'correct-yes' : 'correct-no');
+        } else {
+          insEl.className = 'insight-reveal';
+        }
+      }
+    });
+  });
+}
+
+let teacherStudents = {};
+let teacherSubmitted = {};
+
+function renderTeacherStudents() {
+  const students = Object.values(teacherStudents).sort((a, b) => (a.group - b.group) || String(a.name).localeCompare(String(b.name)));
+  const done = students.filter(s => teacherSubmitted[s.sid] === true).length;
+  document.getElementById('t-student-cnt').textContent = students.length;
+  document.getElementById('t-submitted-cnt').textContent = done;
+  const box = document.getElementById('t-student-list');
+  box.innerHTML = students.map(s => {
+    const ok = teacherSubmitted[s.sid] === true;
+    return `
+      <span style="background:${ok ? 'var(--green-dim)' : 'var(--surface)'};padding:4px 10px;border-radius:20px;font-size:12px;border:1px solid ${ok ? 'var(--green)' : 'var(--border)'}">
+        ${ok ? '✔ ' : ''}${esc(s.group)}조 ${esc(s.name)}
+      </span>`;
+  }).join('');
+}
+
+function updateRevealButton(revealed) {
+  const tBtn = document.getElementById('btn-reveal-toggle');
+  if (!tBtn) return;
+  if (revealed) {
+    tBtn.style.background = 'var(--teal)';
+    tBtn.style.color = '#0d1b2a';
+    tBtn.textContent = '✅ 정답·해설 공개 중 (클릭 시 비공개)';
+  } else {
+    tBtn.style.background = 'var(--amber)';
+    tBtn.style.color = '#0d1b2a';
+    tBtn.textContent = '📢 정답 및 해설 공개 토글';
+  }
+}
+
+function listenTeacherData() {
+  db.ref(`ethics_sessions/${state.sessionCode}/students`).on('value', snap => {
+    teacherStudents = snap.val() || {};
+    renderTeacherStudents();
+  });
+  db.ref(`ethics_sessions/${state.sessionCode}/submitted`).on('value', snap => {
+    teacherSubmitted = snap.val() || {};
+    renderTeacherStudents();
+  });
+  // keeps the button correct even when the teacher re-enters a session that is already revealed
+  db.ref(`ethics_sessions/${state.sessionCode}/revealed`).on('value', snap => {
+    updateRevealButton(snap.val() === true);
+  });
+
+  db.ref(`ethics_sessions/${state.sessionCode}/votes`).on('value', snap => {
+    const data = snap.val() || {};
+    const summaryBox = document.getElementById('t-summary-cards');
+    summaryBox.innerHTML = SCENARIOS.map(sc => {
+      const votes = data[sc.id] || {};
+      const yes = Object.values(votes).filter(v => v === 'yes').length;
+      const no = Object.values(votes).filter(v => v === 'no').length;
+      const count = yes + no;
+      if (count === 0) {
+        return `
+          <div style="background:var(--surface);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--teal)">${sc.tag}</div>
+            <div style="font-size:13px;font-weight:700;margin:4px 0">${sc.title}</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">투표 대기 중 (0명 참여)</div>
+            <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden">
+              <div style="width:100%;height:100%;background:#3b82f6"></div>
+            </div>
+          </div>
+        `;
+      }
+      const yPct = Math.round((yes / count) * 100);
+      const nPct = 100 - yPct;
+      return `
+        <div style="background:var(--surface);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:700;color:var(--teal)">${sc.tag}</div>
+          <div style="font-size:13px;font-weight:700;margin:4px 0">${sc.title}</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">위반: ${yes}명 (${yPct}%) vs 아님: ${no}명 (${nPct}%)</div>
+          <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;display:flex">
+            <div style="width:${yPct}%;background:var(--red)"></div>
+            <div style="width:${nPct}%;background:var(--green)"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  });
+}
+
+async function toggleRevealAnswers() {
+  const ref = db.ref(`ethics_sessions/${state.sessionCode}/revealed`);
+  const snap = await ref.get();
+  const cur = snap.val() === true;
+  const next = !cur;
+  await ref.set(next);
+  updateRevealButton(next);
+
+  toast(next ? '📢 학생들에게 정답과 해설이 공개되었습니다!' : '정답 공개가 비활성화되었습니다.');
+}
+
+async function resetAllVotes() {
+  if (!confirm('투표 데이터를 모두 초기화할까요? 학생들의 선택과 제출 상태가 모두 지워지고, 학생 화면도 다시 선택할 수 있게 열립니다.')) return;
+  const base = `ethics_sessions/${state.sessionCode}`;
+  await db.ref(`${base}/votes`).remove();
+  await db.ref(`${base}/submitted`).remove();
+  await db.ref(`${base}/revealed`).set(false);
+  await db.ref(`${base}/resetAt`).set(Date.now());   // students' screens listen to this and unlock
+  toast('초기화 완료');
+}
+
+function openProjectionWindow() {
+  const code = state.sessionCode;
+  const pWindow = window.open('', 'EthicsProjection', 'width=1280,height=800');
+  pWindow.document.write(`
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>📽 연구윤리 투표 프로젝션 - ${code}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-database-compat.min.js"><\/script>
+<style>
+body { background:#0a1526; color:#e8f0f8; font-family:'Noto Sans KR',sans-serif; margin:0; padding:24px; box-sizing:border-box; }
+.header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #2dd4bf; padding-bottom:14px; margin-bottom:20px; }
+.title { font-size:24px; font-weight:900; color:#2dd4bf; }
+.code-tag { font-family:'JetBrains Mono',monospace; font-size:20px; background:#1e3454; padding:4px 16px; border-radius:8px; border:1px solid #2dd4bf; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.card { background:#162845; border:1.5px solid #2a4060; border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:10px; }
+.sc-tag { font-size:12px; font-weight:700; color:#2dd4bf; }
+.sc-title { font-size:16px; font-weight:900; }
+.sc-text { font-size:13px; color:#8faec8; line-height:1.6; background:rgba(0,0,0,0.25); padding:10px; border-radius:6px; }
+.bar-track { height:30px; background:#0d1b2a; border-radius:6px; overflow:hidden; display:flex; position:relative; }
+.bar-yes { background:#ef4444; height:100%; transition:width 0.4s; }
+.bar-no { background:#22c55e; height:100%; transition:width 0.4s; }
+.bar-pct { position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; padding:0 12px; font-weight:900; font-size:13px; text-shadow:0 1px 2px #000; }
+.insight-box { background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:8px; padding:12px; font-size:12px; line-height:1.6; display:none; }
+.insight-box.show { display:block; }
+.insight-box.no { background:rgba(34,197,94,0.15); border-color:#22c55e; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="title">🗳️ 실시간 탐구 윤리의식 모의 판정 현황</div>
+  <div class="code-tag">세션 코드: ${code}</div>
+</div>
+<div class="grid" id="proj-grid"></div>
+
+<script>
+const SCENARIOS = ${JSON.stringify(SCENARIOS)};
+firebase.initializeApp(${JSON.stringify(firebaseConfig)});
+const db = firebase.database();
+
+const grid = document.getElementById('proj-grid');
+SCENARIOS.forEach(sc => {
+  const c = document.createElement('div');
+  c.className = 'card';
+  c.innerHTML = \`
+    <div class="sc-tag">\${sc.tag}</div>
+    <div class="sc-title">\${sc.title}</div>
+    <div class="sc-text">\${sc.text}</div>
+    <div class="bar-track">
+      <div class="bar-init" id="bi-\${sc.id}" style="position:absolute;inset:0;background:#3b82f6;z-index:1"></div>
+      <div class="bar-yes" id="by-\${sc.id}" style="width:0%;position:relative;z-index:2"></div>
+      <div class="bar-no" id="bn-\${sc.id}" style="width:0%;position:relative;z-index:2"></div>
+      <div class="bar-pct" style="position:absolute;inset:0;z-index:3">
+        <span id="py-\${sc.id}">투표 대기 중</span>
+        <span id="pn-\${sc.id}">0명 참여</span>
+      </div>
+    </div>
+    <div class="insight-box \${sc.correctAns === 'no' ? 'no' : ''}" id="rev-\${sc.id}">
+      <strong>\${sc.badge}</strong><br>\${sc.insight}
+    </div>
+  \`;
+  grid.appendChild(c);
+});
+
+db.ref('ethics_sessions/${code}/votes').on('value', snap => {
+  const d = snap.val() || {};
+  SCENARIOS.forEach(sc => {
+    const v = d[sc.id] || {};
+    const y = Object.values(v).filter(x => x==='yes').length;
+    const n = Object.values(v).filter(x => x==='no').length;
+    const tot = y + n;
+    const initBar = document.getElementById('bi-'+sc.id);
+    const by = document.getElementById('by-'+sc.id);
+    const bn = document.getElementById('bn-'+sc.id);
+    const py = document.getElementById('py-'+sc.id);
+    const pn = document.getElementById('pn-'+sc.id);
+
+    if (tot === 0) {
+      if (initBar) initBar.style.display = 'block';
+      by.style.width = '0%';
+      bn.style.width = '0%';
+      py.textContent = '투표 대기 중';
+      pn.textContent = '0명 참여';
+    } else {
+      if (initBar) initBar.style.display = 'none';
+      const yP = Math.round((y/tot)*100);
+      const nP = 100 - yP;
+      by.style.width = yP + '%';
+      bn.style.width = nP + '%';
+      py.textContent = '⚠️ 위반: ' + yP + '% (' + y + '명)';
+      pn.textContent = '아님: ' + nP + '% (' + n + '명) ✅';
+    }
+  });
+});
+
+db.ref('ethics_sessions/${code}/revealed').on('value', snap => {
+  const isRev = snap.val() || false;
+  SCENARIOS.forEach(sc => {
+    const box = document.getElementById('rev-'+sc.id);
+    if (box) box.classList.toggle('show', isRev);
+  });
+});
+<\/script>
+</body>
+</html>
+  `);
+  pWindow.document.close();
+}
+
+window.addEventListener('DOMContentLoaded', tryRestoreStudent);
+</script>
+</body>
+</html>
