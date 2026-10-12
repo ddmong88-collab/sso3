@@ -953,11 +953,11 @@ body {
     </button>
     <button class="m-tab-btn" id="tab-btn-3" onclick="switchMission(3)">
       <span class="tab-status-icon" id="tab-icon-3">🔒</span>
-      <span>미션 3. 복제/표절</span>
+      <span>미션 3. 서원 러너</span>
     </button>
-    <button class="m-tab-btn hidden" id="tab-btn-4" onclick="switchMission(4)">
+    <button class="m-tab-btn" id="tab-btn-4" onclick="switchMission(4)">
       <span class="tab-status-icon" id="tab-icon-4">🔒</span>
-      <span>보너스 4. 서원 러너</span>
+      <span>미션 4. 복제/표절</span>
     </button>
   </div>
 
@@ -1199,72 +1199,27 @@ body {
       💡 <strong>[과학 탐구에서의 AI 윤리와 비판적 사고]</strong><br>
       생성형 AI는 매우 정교하고 그럴듯한 문장을 만들어내지만, 사실 여부와 출처를 스스로 보증하지 못합니다. 
       따라서 과학 연구 및 탐구 활동에서 AI 도구를 활용할 때에는 <strong>AI가 제시한 수치, 논문, 결론을 맹신하지 말고, 반드시 실제 공인 학술 데이터베이스나 원문 문헌을 통해 사실 여부를 꼼꼼히 교차 검증하는 '비판적 태도'</strong>를 반드시 가져야 합니다.<br><br>
-      👉 <strong>가짜 논문 검증 성공! 아래 버튼을 눌러 다음 미션 3(연구 표절 색출)으로 이동하세요.</strong>
+      👉 <strong>가짜 논문 검증 성공! 아래 버튼을 눌러 다음 미션 3(서원 러너)으로 이동하세요.</strong>
       <div style="margin-top:14px;text-align:right">
-        <button onclick="switchMission(3)" style="background:var(--teal);color:#090e17;border:none;padding:10px 20px;border-radius:6px;font-weight:800;cursor:pointer;font-size:13.5px">미션 3 (연구 표절 색출) 시작하기 ➔</button>
+        <button onclick="switchMission(3)" style="background:var(--teal);color:#090e17;border:none;padding:10px 20px;border-radius:6px;font-weight:800;cursor:pointer;font-size:13.5px">미션 3 (서원 러너) 시작하기 ➔</button>
       </div>
     </div>
   </div>
 
-  <!-- MISSION 3: 복제/표절 -->
+  <!-- MISSION 3: 우노 러너 (3 research-ethics quizzes -> 3 colored digits -> the box with the rotating decoder disk) -->
   <div class="mission-box hidden" id="m-box-3">
     <div class="m-header">
       <div>
-        <div class="m-num">Mission 03 / 지식재산 및 표절</div>
-        <div class="m-title">연구 복제 및 텍스트 표절 색출</div>
+        <div class="m-num">Mission 03 / 연구윤리 퀴즈 러너</div>
+        <div class="m-title">서원 러너</div>
       </div>
       <span class="badge-status locked" id="badge-3">LOCKED</span>
     </div>
 
     <div class="m-desc">
-      학생 탐구보고서에 선행 연구를 출처 표기 없이 그대로 베낀(표절) 의혹이 있습니다.<br>
-      미션을 수행하기 전에 교실 안에 숨겨진 <strong>『선행 연구 원문 학술논문 (2019)』</strong>을 확보하여 두 문서를 정밀 대조하세요!<br>
-      토씨 하나 바꾸지 않고 표절한 원문 문단을 적발한 뒤, 배부된 <strong>『타공판(타공카드) - 구멍이 뚫린 카드』</strong>를 원문 논문 위에 포개어 올리세요!
-    </div>
-
-    <!-- The punch-card letters are read on paper and used straight away with the printed rotating decoder disk;
-         there is no web step for them. Hint cards help groups that get stuck. -->
-    <div class="widget-box" id="decrypt-cipher-box">
-      <div class="widget-title">🔐 타공판 + 회전 해독판</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px">
-        표절 문단 위에 <strong>『타공판』</strong>을 올려 글자를 찾고, <strong>『실물 회전 해독판』</strong>을 활용해 영문 자물쇠의 비밀번호를 찾아 입력하세요.
-      </div>
-      <div class="lock-area">
-        <input class="lock-input" id="input-lock-3-final" placeholder="5자리 영문 자물쇠 코드 입력" maxlength="8">
-        <button class="btn-unlock" onclick="unlockMission3()">최종 해제 🔓</button>
-      </div>
-    </div>
-
-    <div class="m-hint-box hidden" id="unlocked-msg-3" style="background:rgba(16, 185, 129, 0.12);border-color:#10b981;color:#ecfdf5">
-      🎉 <strong>미션 3 클리어! [연구 복제 및 텍스트 표절 적발 성공]</strong><br><br>
-      
-      ⚠️ <strong>[출처 미표기 무단 복제와 연구 표절(Plagiarism)]</strong><br>
-      우리 탐구보고서 맨 뒤의 참고문헌 목록([1]~[8])을 다시 확인해 보세요. <strong>어디에도 2019년 김진우 연구원의 선행 논문은 출처로 적혀 있지 않죠?</strong><br>
-      타인의 글과 독창적인 연구 아이디어를 그대로 가져다 쓰면서, <strong>출처를 전혀 밝히지 않은 채 본인들의 연구인 것처럼 꾸며낸 것</strong>—이것이 바로 과학계에서 가장 엄격하게 금지하는 <strong>'무단 복제 및 연구 표절(CLONE)'</strong>입니다!<br><br>
-      
-      💡 <strong>[올바른 과학 연구자의 인용 윤리]</strong><br>
-      선행 연구를 참고하거나 인용할 때에는 반드시 저자와 출처(학술지명, 연도, 페이지)를 정직하게 밝히고, 타인의 문장을 그대로 쓸 때는 인용부호(" ")를 사용하거나 자신의 언어로 재구성(패러프레이징)해야 합니다. 출처 없는 무단 복사는 지적 재산권을 침해하는 중대한 연구 부정 행위입니다.<br><br>
-      
-      👉 <strong>오프라인 실물 영문 자물쇠 [ C L O N E ]을 열어 다음 미션 단서를 획득하세요!</strong>
-      <div class="finish-banner">🏁 전체 미션 완료! 걸린 시간 <span class="finish-time" id="finish-time">--</span></div>
-      <div style="margin-top:12px"><button type="button" class="btn-bonus" onclick="openBonus()">🎁 보너스 미션 4 도전하기 ➔</button></div>
-    </div>
-  </div>
-
-  <!-- BONUS MISSION 4: 서원고 퀴즈 러너 (opened with a button after mission 3 is cleared) -->
-  <div class="mission-box hidden" id="m-box-4">
-    <div class="m-header">
-      <div>
-        <div class="m-num">Bonus Mission 04 / 서원고 퀴즈 러너</div>
-        <div class="m-title">솔개의 소나무 숲 달리기</div>
-      </div>
-      <span class="badge-status locked" id="badge-4">BONUS</span>
-    </div>
-
-    <div class="m-desc">
-      <strong>우노 🐕</strong>가 교목 <strong>소나무</strong> 숲을 달리고, 하늘에는 서원고의 교조 <strong>솔개</strong>가 날고 있어요.<br>
+      시바견 <strong>우노 🐕</strong>가 달리고, 하늘에는 서원고의 교조 <strong>솔개</strong>가 날고 있어요.<br>
       화면을 <strong>터치</strong>(또는 스페이스바)하거나 <strong>점프 버튼</strong>을 눌러 <strong>솔방울 🌰</strong>을 넘으세요.
-      점수가 <strong>100점</strong>씩 오를 때마다 <strong>퀴즈</strong>가 나오고, 맞히면 <strong>암호 숫자</strong>가 하나씩 나타납니다.<br>
+      점수가 <strong>100점</strong>씩 오를 때마다 <strong>연구윤리 퀴즈</strong>가 나오고, 맞히면 <strong>암호 숫자</strong>가 하나씩 나타납니다.<br>
       <span style="font-size:12.5px;color:var(--text3)">퀴즈를 푼 뒤에는 <strong>다시 시작</strong> 버튼을 눌러야 3, 2, 1 카운트다운 후 출발해요. 넘어져도 마지막으로 푼 퀴즈의 점수부터 다시 달릴 수 있어요.</span>
     </div>
 
@@ -1300,28 +1255,86 @@ body {
         <span style="font-size:24px">🧩</span>
         <div>
           <strong>암호 숫자 3개를 모두 모았어요!</strong> (🔴 빨강 · 🔵 파랑 · 🟡 노랑)<br>
-          숫자들을 조합해 간식상자의 자물쇠를 열고 간식을 맛있게 드세요.
+          숫자들을 조합해 자물쇠를 풀어 보세요.<br>
+          <strong>미션 3의 상자에서 다음 미션에 필요한 도구 2가지를 챙기세요!</strong>
         </div>
       </div>
-      <div class="widget-box">
-        <div class="widget-title">✍️ 마지막 암호 (모든 모둠 동일)</div>
-        <div style="font-size:13.5px;line-height:1.7;margin-bottom:10px">아래 문장을 <strong>그대로</strong> 적어 주세요.</div>
-        <div style="text-align:center;font-size:19px;font-weight:900;color:var(--teal);margin:6px 0 12px">오늘 수업도 완료!&nbsp; 오수완!</div>
+      <div class="lock-area" id="lock-area-3">
+        <input class="lock-input" id="input-lock-3" placeholder="자물쇠를 연 3자리 숫자 입력" maxlength="3" inputmode="numeric">
+        <button class="btn-unlock" onclick="unlockMission3()">상자 열었어요 🔓</button>
+      </div>
+    </div>
+
+    <div class="m-hint-box hidden" id="unlocked-msg-3" style="background:rgba(251, 191, 36, 0.10);border-color:#fbbf24;color:#fef3c7">
+      🎉 <strong>미션 3 클리어! 상자가 열렸어요.</strong><br><br>
+      상자 안의 <strong>『타공판』</strong>과 <strong>『회전 해독판』</strong>, 다음 미션에 필요한 도구 2가지를 챙기세요!<br><br>
+      💡 <strong>[오늘 퀴즈 정리]</strong><br>
+      • 챌린저호의 비극은 <strong>안전 경고를 무시</strong>한 데서 시작됐어요.<br>
+      • 없는 데이터를 만들면 <strong>위조</strong>, 있는 데이터를 바꾸거나 빼면 <strong>변조</strong>예요.
+      <div style="margin-top:14px;text-align:right">
+        <button onclick="switchMission(4)" style="background:var(--teal);color:#090e17;border:none;padding:10px 20px;border-radius:6px;font-weight:800;cursor:pointer;font-size:13.5px">미션 4 (연구 표절 색출) 시작하기 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISSION 4: 복제/표절 (CLONE 영문 자물쇠 -> 간식, then the closing phrase) -->
+  <div class="mission-box hidden" id="m-box-4">
+    <div class="m-header">
+      <div>
+        <div class="m-num">Mission 04 / 지식재산 및 표절</div>
+        <div class="m-title">연구 복제 및 텍스트 표절 색출</div>
+      </div>
+      <span class="badge-status locked" id="badge-4">LOCKED</span>
+    </div>
+
+    <div class="m-desc">
+      학생 탐구보고서에 선행 연구를 출처 표기 없이 그대로 베낀(표절) 의혹이 있습니다.<br>
+      미션을 수행하기 전에 미션 3의 상자 옆에 놓여진 <strong>『선행 연구 원문 학술논문 (2019)』</strong>을 확보하여 두 문서를 정밀 대조하세요!<br>
+      토씨 하나 바꾸지 않고 표절한 원문 문단을 적발한 뒤, 배부된 <strong>『타공판(타공카드) - 구멍이 뚫린 카드』</strong>를 원문 논문 위에 포개어 올리세요!
+    </div>
+
+    <!-- The punch-card letters are read on paper and used straight away with the printed rotating decoder disk;
+         there is no web step for them. Hint cards help groups that get stuck. -->
+    <div class="widget-box" id="decrypt-cipher-box">
+      <div class="widget-title">🔐 타공판 + 회전 해독판</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px">
+        표절 문단 위에 <strong>『타공판』</strong>을 올려 글자를 찾고, <strong>『실물 회전 해독판』</strong>을 활용해 영문 자물쇠의 비밀번호를 찾아 입력하세요.
+      </div>
+      <div class="lock-area">
+        <input class="lock-input" id="input-lock-3-final" placeholder="5자리 영문 자물쇠 코드 입력" maxlength="8">
+        <button class="btn-unlock" onclick="unlockClone()">최종 해제 🔓</button>
+      </div>
+    </div>
+
+    <!-- shown after CLONE is accepted -->
+    <div class="m-hint-box hidden" id="clone-explain" style="background:rgba(16, 185, 129, 0.12);border-color:#10b981;color:#ecfdf5">
+      🎉 <strong>영문 자물쇠 [ C L O N E ] 해제! [연구 복제 및 텍스트 표절 적발 성공]</strong><br><br>
+
+      ⚠️ <strong>[출처 미표기 무단 복제와 연구 표절(Plagiarism)]</strong><br>
+      우리 탐구보고서 맨 뒤의 참고문헌 목록([1]~[8])을 다시 확인해 보세요. <strong>어디에도 2019년 김진우 연구원의 선행 논문은 출처로 적혀 있지 않죠?</strong><br>
+      타인의 글과 독창적인 연구 아이디어를 그대로 가져다 쓰면서, <strong>출처를 전혀 밝히지 않은 채 본인들의 연구인 것처럼 꾸며낸 것</strong>—이것이 바로 과학계에서 가장 엄격하게 금지하는 <strong>'무단 복제 및 연구 표절(CLONE)'</strong>입니다!<br><br>
+
+      💡 <strong>[올바른 과학 연구자의 인용 윤리]</strong><br>
+      선행 연구를 참고하거나 인용할 때에는 반드시 저자와 출처(학술지명, 연도, 페이지)를 정직하게 밝히고, 타인의 문장을 그대로 쓸 때는 인용부호(" ")를 사용하거나 자신의 언어로 재구성(패러프레이징)해야 합니다. 출처 없는 무단 복사는 지적 재산권을 침해하는 중대한 연구 부정 행위입니다.<br><br>
+
+      👉 <strong>영문 자물쇠를 열고 간식을 맛있게 드세요! 🍪</strong>
+    </div>
+
+    <div class="widget-box hidden" id="final-phrase-box">
+      <div class="widget-title">✍️ 마지막 암호 (모든 모둠 동일)</div>
+      <div style="font-size:13.5px;line-height:1.7;margin-bottom:10px">아래 문장을 <strong>그대로</strong> 적어 주세요.</div>
+      <div style="text-align:center;font-size:19px;font-weight:900;color:var(--teal);margin:6px 0 12px">오늘 수업도 완료!&nbsp; 오수완!</div>
       <div class="lock-area" id="lock-area-4">
         <input class="lock-input" id="input-lock-4" placeholder="위 문장을 그대로 입력" maxlength="30">
         <button class="btn-unlock" onclick="unlockMission4()">마지막 암호 입력 🔓</button>
       </div>
-      </div>
     </div>
 
     <div class="m-hint-box hidden" id="unlocked-msg-4" style="background:rgba(251, 191, 36, 0.10);border-color:#fbbf24;color:#fef3c7">
-      🎁 <strong>보너스 미션 클리어! 서원고 퀴즈 러너 완주!</strong><br><br>
-      서원고는 <strong>2003년 3월 6일</strong>에 문을 열었고, 첫 입학식은 6학급 184명이었습니다.<br>
-      🌲 교목 <strong>소나무</strong> · 🌹 교화 <strong>장미</strong> · 🦅 교조 <strong>솔개</strong> · 교훈 <strong>정심(正心)</strong><br><br>
-      💡 <strong>소나무 상식</strong>: 솔잎은 2개씩 묶여 있고, 소나무는 밑씨가 드러난 겉씨식물이며, 꽃가루는 바람을 타고 날아갑니다.
+      🎁 <strong>오늘 수업도 완료! 오수완!</strong>
+      <div class="finish-banner">🏁 전체 미션 완료! 걸린 시간 <span class="finish-time" id="finish-time">--</span></div>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -1332,7 +1345,7 @@ const SAVE_KEY = 'escape_room_progress_v1';
 
 // State (saved to localStorage so a refresh on a phone does not wipe progress)
 let clearState = { 1: false, 2: false, 3: false, 4: false };
-let progress = { m1Code: false, tokens: [], bonusOpen: false, bonusStep: 0 };
+let progress = { m1Code: false, tokens: [], cloneOk: false, bonusStep: 0 };
 let startTime = Date.now();
 let finishTime = null;
 
@@ -1402,12 +1415,20 @@ function applyCleared(n) {
     if (!clearState[3]) document.getElementById('tab-icon-3').textContent = '🔓';
   }
   if (n === 3) {
-    document.getElementById('decrypt-cipher-box').classList.add('hidden');
+    document.getElementById('lock-area-3').classList.add('hidden');
+    bonusStop();
+    if (!clearState[4]) document.getElementById('tab-icon-4').textContent = '🔓';
   }
   if (n === 4) {
-    document.getElementById('lock-area-4').classList.add('hidden');
-    bonusStop();
+    document.getElementById('decrypt-cipher-box').classList.add('hidden');
+    document.getElementById('final-phrase-box').classList.add('hidden');
   }
+}
+
+function showCloneDone() {
+  document.getElementById('decrypt-cipher-box').classList.add('hidden');
+  document.getElementById('clone-explain').classList.remove('hidden');
+  if (!clearState[4]) document.getElementById('final-phrase-box').classList.remove('hidden');
 }
 
 function showM1Code() {
@@ -1420,14 +1441,14 @@ function restoreUI() {
   updateTokensUI();
   if (progress.m1Code) showM1Code();
   [1, 2, 3, 4].forEach(n => { if (clearState[n]) applyCleared(n); });
-  if (progress.bonusOpen || DEV_MODE) showBonusTab();
+  if (progress.cloneOk) showCloneDone();
   bonusRestore();
-  switchMission(progress.bonusOpen && clearState[3] ? 4 : (clearState[1] ? (clearState[2] ? 3 : 2) : 1));
+  switchMission(clearState[3] ? 4 : (clearState[2] ? 3 : (clearState[1] ? 2 : 1)));
   renderTimer();
 }
 
 function switchMission(num) {
-  if (num !== 4 && typeof bonusStop === 'function') bonusStop();
+  if (num !== 3 && typeof bonusStop === 'function') bonusStop();
   if (!DEV_MODE && num > 1 && !clearState[num - 1]) {
     toast('🔒 이전 미션을 먼저 해결해야 열립니다.');
     return;
@@ -1593,39 +1614,53 @@ function unlockMission2() {
   }
 }
 
-// ----------------- MISSION 3 LOGIC -----------------
-function unlockMission3() {
+// ----------------- MISSION 4 LOGIC (plagiarism: CLONE, then the closing phrase) -----------------
+function unlockClone() {
   const val = document.getElementById('input-lock-3-final').value.trim().toUpperCase();
   if (val === 'CLONE') {
-    clearState[3] = true;
-    if (!finishTime) finishTime = Date.now();
-    applyCleared(3);
-    renderTimer();
+    progress.cloneOk = true;
+    showCloneDone();
     saveProgress();
-    toast('🎉 미션 3 완료! 연구 표절 및 복제 적발에 성공하였습니다!');
+    toast('🎉 영문 자물쇠 해제! 연구 표절 적발 성공!');
   } else {
     toast('❌ 5자리 영문 자물쇠 코드가 일치하지 않습니다. 타공판 글자 순서대로 회전판 구멍 속 알파벳을 다시 확인해 보세요. 막히면 선생님께 힌트 카드를 요청하세요.');
   }
 }
 
-// ----------------- BONUS MISSION 4: 서원 퀴즈 러너 -----------------
+function unlockMission4() {
+  // everyone types the same closing phrase; spaces and punctuation are ignored
+  const clean = t => t.replace(/[\s!.,~\-_]/g, '');
+  if (clean(document.getElementById('input-lock-4').value) === clean(BONUS.finalPhrase)) {
+    clearState[4] = true;
+    if (!finishTime) finishTime = Date.now();
+    applyCleared(4);
+    renderTimer();
+    saveProgress();
+    toast('🎁 오늘 수업도 완료! 오수완!');
+  } else {
+    toast('❌ 위에 적힌 문장을 그대로 따라 적어 보세요.');
+  }
+}
+
+// ----------------- MISSION 3: 우노 러너 (연구윤리 퀴즈) -----------------
 // A dino-style runner with Uno the Shiba. Every 100 points the game pauses for one quiz; a correct answer reveals one code digit.
 // The three digits are typed in the order they were collected.
 const BONUS = {
   milestones: [100, 200, 300],
-  digits: ['7', '2', '4'],                          // red, blue, yellow
+  digits: ['4', '2', '7'],                  // red, blue, yellow (the lock reads red-yellow-blue: 4-7-2)
+  lockCode: '472',
   colors: ['#ff4d4d', '#4d9bff', '#ffd23f'], colorNames: ['빨강', '파랑', '노랑'],
   finalPhrase: '오늘 수업도 완료! 오수완!',
   questions: [
-    { q: '서원고의 교목은 소나무입니다. 소나무의 잎(솔잎)은 한 묶음에 몇 개씩 붙어 있을까요?',
-      options: ['3개', '2개', '5개', '7개'], answer: 1,
-      why: '소나무는 2개씩, 잣나무는 5개씩, 리기다소나무는 3개씩 묶여 붙어 있어요.' },
-    { q: '서원고는 몇 년에 문을 열었을까요? (개교년도)',
-      options: ['1998년', '2001년', '2003년', '2008년'], answer: 2,
-      why: '서원고는 2003년 3월 6일에 문을 열었어요. 첫 입학식은 6학급 184명이었답니다.' },
-    { q: '소나무는 어떤 식물 무리일까요?',
-      options: ['이끼식물', '속씨식물', '겉씨식물', '양치식물'], answer: 2,
-      why: '소나무는 밑씨가 씨방에 싸여 있지 않고 솔방울 비늘 위에 드러나 있는 겉씨식물이에요.' }
+    { q: '1986년 챌린저호 폭발 사고의 직접적인 원인이 된 "작은 부품"은 무엇이었을까요?',
+      options: ['태양전지판', '고무패킹(O-링)', '연료탱크 도장', '안테나'], answer: 1,
+      why: '추운 날씨로 고체 연료 추진기의 고무패킹(O-링)이 제 기능을 못 했어요. 엔지니어의 경고가 있었지만 발사가 강행되었답니다.' },
+    { q: '"실험을 망쳤는데, 그냥 결과가 나온 것처럼 숫자를 지어서 적자!" 이 행위는 무엇일까요?',
+      options: ['변조', '위조', '표절', '부당한 저자 표시'], answer: 1,
+      why: '존재하지 않는 데이터나 결과를 만들어 내는 행위는 위조(Fabrication)예요. 연구 진실성을 지키지 않은 부정행위예요.' },
+    { q: '"가설과 안 맞는 식물은 결과에서 빼 버리자!" 이 행위는 무엇일까요?',
+      options: ['표절', '부당한 저자 표시', '변조', '위조'], answer: 2,
+      why: '있는 데이터를 임의로 바꾸거나 삭제해 결과를 왜곡하는 행위는 변조(Falsification)예요.' }
   ]
 };
 
@@ -1646,24 +1681,7 @@ const bonus = {
 
 function bonusStep() { return Math.min(progress.bonusStep || 0, BONUS.questions.length); }
 
-function showBonusTab() {
-  document.getElementById('tab-btn-4').classList.remove('hidden');
-  if (!clearState[4]) document.getElementById('tab-icon-4').textContent = '🎁';
-}
-
-// Button inside the "mission 3 cleared" message
-function openBonus() {
-  progress.bonusOpen = true;
-  saveProgress();
-  showBonusTab();
-  switchMission(4);
-  bonusInit();
-  bonusRender();
-  document.getElementById('m-box-4').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 function bonusRestore() {
-  if (!(progress.bonusOpen || DEV_MODE)) return;
   bonusInit();
   bonusRender();
 }
@@ -1703,8 +1721,8 @@ function bonusRender() {
   });
   document.getElementById('bonus-score').textContent = Math.floor(bonus.state === 'idle' ? (BONUS.milestones[step - 1] || 0) : bonus.score);
   const done = step >= BONUS.questions.length;
-  document.getElementById('bonus-final').classList.toggle('hidden', !done || clearState[4]);
-  document.getElementById('bonus-play-area').classList.toggle('hidden', done || clearState[4]);
+  document.getElementById('bonus-final').classList.toggle('hidden', !done || clearState[3]);
+  document.getElementById('bonus-play-area').classList.toggle('hidden', done || clearState[3]);
   const msg = document.getElementById('bonus-cover-msg');
   if (step > 0 && !done) msg.textContent = `퀴즈 ${step}개를 풀었어요! ${BONUS.milestones[step - 1]}점부터 이어서 달려요.`;
   else msg.textContent = '준비되면 시작을 누르세요!';
@@ -1716,8 +1734,8 @@ function bonusStart() {
   const step = bonusStep();
   bonus.score = BONUS.milestones[step - 1] || 0;   // a fall never costs a solved quiz
   bonus.dist = 0; bonus.y = 0; bonus.vy = 0; bonus.obstacles = [];
-  bonus.gapLeft = 520;                              // generous empty run-up before the first obstacle
-  bonus.speed = 280 + Math.min(bonus.score * 0.35, 110);
+  bonus.gapLeft = 400;                              // generous empty run-up before the first obstacle
+  bonus.speed = 330 + Math.min(bonus.score * 0.6, 180);
   bonus.state = 'countdown';                        // 3, 2, 1 before every start so nobody runs into a pine cone unprepared
   bonus.cdStart = performance.now();
   document.getElementById('bonus-cover').classList.add('hidden');
@@ -1756,16 +1774,17 @@ function bonusUpdate(dt) {
   bonus.y = Math.max(0, bonus.y + bonus.vy * dt);
   if (bonus.y === 0) bonus.vy = 0;
   // speed grows slowly with the score, score grows with distance
-  bonus.speed = 280 + Math.min(bonus.score * 0.35, 110);
+  bonus.speed = 330 + Math.min(bonus.score * 0.6, 180);
   const move = bonus.speed * dt;
   bonus.score += move / 30;
   bonus.dist += move;
   // obstacles
   bonus.gapLeft -= move;
   if (bonus.gapLeft <= 0) {
-    const h = [26, 30, 34][Math.floor(Math.random() * 3)];
+    const h = [26, 30, 34, 38][Math.floor(Math.random() * 4)];
     bonus.obstacles.push({ x: BG.W + 30, w: 22, h });
-    bonus.gapLeft = (280 + Math.random() * 220) * (bonus.speed / 300);
+    if (Math.random() < 0.35) bonus.obstacles.push({ x: BG.W + 30 + 24, w: 22, h: [26, 30, 34, 38][Math.floor(Math.random() * 4)] });   // a pair of pine cones side by side
+    bonus.gapLeft = (210 + Math.random() * 150) * (bonus.speed / 300);
   }
   bonus.obstacles.forEach(o => { o.x -= move; });
   bonus.obstacles = bonus.obstacles.filter(o => o.x > -40);
@@ -1868,17 +1887,19 @@ function bonusResume() {
   document.getElementById('bonus-canvas').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function unlockMission4() {
-  // everyone types the same closing phrase; spaces and punctuation are ignored
-  const clean = t => t.replace(/[\s!.,~\-_]/g, '');
-  if (clean(document.getElementById('input-lock-4').value) === clean(BONUS.finalPhrase)) {
-    clearState[4] = true;
-    applyCleared(4);
+function unlockMission3() {
+  // the 3 digits opened the snack box: red 7, then yellow 4, then blue 2 (the order of the stickers on the lock)
+  const raw = document.getElementById('input-lock-3').value.trim();
+  if (raw === BONUS.lockCode) {
+    clearState[3] = true;
+    applyCleared(3);
     bonusRender();
     saveProgress();
-    toast('🎁 오늘 수업도 완료! 오수완!');
+    toast('🎉 미션 3 완료! 상자 속 회전 해독판을 꺼내세요.');
+  } else if (raw.split('').sort().join('') === BONUS.digits.slice().sort().join('')) {
+    toast('❌ 숫자는 맞아요! 자물쇠에 붙은 스티커 색깔의 순서대로 조합해 보세요.');
   } else {
-    toast('❌ 위에 적힌 문장을 그대로 따라 적어 보세요.');
+    toast('❌ 모은 암호 숫자 3개를 조합해 자물쇠를 열어 보세요.');
   }
 }
 
