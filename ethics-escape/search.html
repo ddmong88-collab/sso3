@@ -282,7 +282,7 @@ body {
   </div>
 
   <!-- Results Area -->
-  <div class="results-header" id="results-header">
+  <div class="results-header" id="results-header" style="display:none">
     <div>검색 결과: <span class="result-count" id="result-count">전체 5편의 문헌이 검색 가능합니다</span></div>
   </div>
 
@@ -391,6 +391,7 @@ function doSearch() {
     showAllPapers();
     return;
   }
+  document.getElementById('results-header').style.display = '';
 
   // Check if searching for the missing fake paper!
   // Any distinctive part of the fake reference [5] (author, journal, or title) leads to the 404 page
@@ -439,9 +440,10 @@ function doSearch() {
   renderPapers(filtered);
 }
 
+// Nothing is listed until a search is made (students must search for the references themselves)
 function showAllPapers() {
-  document.getElementById('result-count').textContent = `전체 ${PAPERS.length}편의 검증 문헌 열람 가능`;
-  renderPapers(PAPERS);
+  document.getElementById('results-header').style.display = 'none';
+  document.getElementById('results-list').innerHTML = '';
 }
 
 function renderPapers(list) {
