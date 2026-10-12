@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>과학탐구실험 온·오프라인 연구윤리 방탈출 터미널</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-database-compat.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700;900&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -890,6 +892,23 @@ body {
 .digit-slot.c-done { width: 64px; height: 76px; font-size: 40px; }
 .digit-slot.filled { color: var(--teal); border-style: solid; border-color: var(--teal); box-shadow: 0 0 12px rgba(0, 242, 254, 0.25); animation: pop 0.3s; }
 
+/* Ranking */
+.rank-box { margin-top: 16px; padding: 16px; border: 1.5px solid #fbbf24; border-radius: 10px; background: rgba(251, 191, 36, 0.07); }
+.rank-title { font-size: 16px; font-weight: 900; color: #fbbf24; margin-bottom: 10px; }
+.rank-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+.rank-form input { flex: 1 1 160px; min-width: 0; padding: 11px 12px; border-radius: 8px; border: 1.5px solid var(--border2); background: #0a111c; color: #fff; font-size: 15px; font-family: inherit; }
+.rank-form button { padding: 11px 18px; }
+.rank-note { font-size: 12px; color: var(--text3); }
+.rank-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.rank-list li { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #0a111c; margin-bottom: 6px; font-size: 14.5px; }
+.rank-list li.me { border: 1.5px solid var(--teal); background: rgba(0, 242, 254, 0.08); }
+.rank-list .rk { width: 34px; text-align: center; font-weight: 900; color: #fbbf24; flex: none; }
+.rank-list .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.rank-list .tm { font-family: 'JetBrains Mono', monospace; color: var(--teal); flex: none; }
+.rank-board-mode .mission-tab-nav, .rank-board-mode .mission-box { display: none !important; }
+.rank-board-mode .rank-box { margin-top: 0; font-size: 18px; }
+.rank-board-mode .rank-list li { font-size: 20px; padding: 12px 14px; }
+
 /* Mobile (phones) */
 @media (max-width: 600px) {
   body { font-size: 14px; }
@@ -1334,6 +1353,21 @@ body {
       🎁 <strong>오늘 수업도 완료! 오수완!</strong>
       <div class="finish-banner">🏁 전체 미션 완료! 걸린 시간 <span class="finish-time" id="finish-time">--</span></div>
     </div>
+
+    <!-- Ranking: shown after the closing phrase; entries live in Firebase under ethics_sessions/ESCRANK (ESCTEST with ?dev=1) -->
+    <div class="rank-box hidden" id="rank-box">
+      <div class="rank-title">🏆 방탈출 랭킹</div>
+      <div id="rank-form-area">
+        <div style="font-size:13.5px;line-height:1.6">우리 조의 <strong>조 이름 또는 별명</strong>을 적고 기록을 남겨 보세요!</div>
+        <div class="rank-form">
+          <input id="rank-name" placeholder="조 이름 또는 별명" maxlength="12" autocomplete="off">
+          <button type="button" class="btn-unlock" id="rank-send" onclick="submitRank()">기록 남기기 🏆</button>
+        </div>
+        <div class="rank-note">걸린 시간이 짧을수록 높은 순위예요. 기록은 한 번만 남길 수 있어요.</div>
+      </div>
+      <div id="rank-msg" class="rank-note" style="margin-top:8px"></div>
+      <ol class="rank-list" id="rank-list"></ol>
+    </div>
   </div>
 </div>
 
@@ -1345,7 +1379,7 @@ const SAVE_KEY = 'escape_room_progress_v1';
 
 // State (saved to localStorage so a refresh on a phone does not wipe progress)
 let clearState = { 1: false, 2: false, 3: false, 4: false };
-let progress = { m1Code: false, tokens: [], cloneOk: false, bonusStep: 0 };
+let progress = { m1Code: false, tokens: [], cloneOk: false, bonusStep: 0, rankId: '' };
 let startTime = Date.now();
 let finishTime = null;
 
@@ -1422,6 +1456,7 @@ function applyCleared(n) {
   if (n === 4) {
     document.getElementById('decrypt-cipher-box').classList.add('hidden');
     document.getElementById('final-phrase-box').classList.add('hidden');
+    showRankBox();
   }
 }
 
@@ -1946,9 +1981,121 @@ function bonusDraw() {
   }
 }
 
+// ----------------- RANKING (Firebase, shared by all groups) -----------------
+// The vote app's security rules only allow ethics_sessions/<CODE>/students/<id>, so the ranking is stored there under a fixed
+// code. ?dev=1 uses a separate test board so rehearsals never show up in the real ranking.
+const RANK_CODE = DEV_MODE ? 'ESCTEST' : 'ESCRANK';
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDa7GPfWb1PnWRLfu6C1y19MS_gxe9NipA",
+  authDomain: "science-research-ethics.firebaseapp.com",
+  databaseURL: "https://science-research-ethics-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "science-research-ethics",
+  storageBucket: "science-research-ethics.firebasestorage.app",
+  messagingSenderId: "658411937251",
+  appId: "1:658411937251:web:ac61054ea40bc07a05d4d6"
+};
+let rankRef = null, rankListening = false, rankRows = [];
+
+function rankDb() {
+  if (rankRef) return rankRef;
+  try {
+    if (typeof firebase === 'undefined') return null;
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    rankRef = firebase.database().ref(`ethics_sessions/${RANK_CODE}/students`);
+  } catch (e) { rankRef = null; }
+  return rankRef;
+}
+
+function fmtTime(ms) {
+  const sec = Math.floor(ms / 1000);
+  return `${Math.floor(sec / 60)}분 ${String(sec % 60).padStart(2, '0')}초`;
+}
+
+function renderRank() {
+  const list = document.getElementById('rank-list');
+  list.innerHTML = '';
+  const rows = rankRows.slice().sort((a, b) => a.ms - b.ms || a.at - b.at);
+  const mine = progress.rankId;
+  const medal = ['🥇', '🥈', '🥉'];
+  const shown = rows.slice(0, 10);
+  const myIdx = rows.findIndex(r => r.id === mine);
+  if (myIdx >= 10) shown.push(rows[myIdx]);
+  shown.forEach(r => {
+    const rank = rows.indexOf(r) + 1;
+    const li = document.createElement('li');
+    if (r.id === mine) li.className = 'me';
+    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = medal[rank - 1] || String(rank);
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;   // textContent: names are never treated as HTML
+    const tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = fmtTime(r.ms);
+    li.append(rk, nm, tm);
+    list.appendChild(li);
+  });
+  if (!rows.length) document.getElementById('rank-msg').textContent = '아직 기록이 없어요. 첫 기록의 주인공이 되어 보세요!';
+}
+
+function listenRank() {
+  const ref = rankDb();
+  const msg = document.getElementById('rank-msg');
+  if (!ref) { msg.textContent = '랭킹 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.'; return; }
+  if (rankListening) return;
+  rankListening = true;
+  ref.on('value', snap => {
+    const v = snap.val() || {};
+    rankRows = Object.keys(v).map(k => ({ id: k, name: String(v[k].name || '').slice(0, 12), ms: Number(v[k].ms) || 0, at: Number(v[k].at) || 0 }))
+      .filter(r => r.name && r.ms > 0);
+    if (rankRows.length) msg.textContent = progress.rankId ? '🎉 기록이 저장되었어요!' : '';
+    renderRank();
+  }, err => {
+    rankListening = false;
+    msg.textContent = '랭킹을 불러오지 못했어요. (선생님께 알려 주세요)';
+  });
+}
+
+function showRankBox() {
+  if (!clearState[4]) return;
+  document.getElementById('rank-box').classList.remove('hidden');
+  document.getElementById('rank-form-area').classList.toggle('hidden', !!progress.rankId);
+  listenRank();
+}
+
+function submitRank() {
+  const input = document.getElementById('rank-name');
+  const name = input.value.replace(/[<>]/g, '').trim().slice(0, 12);
+  if (!name) { toast('조 이름 또는 별명을 적어 주세요.'); return; }
+  if (progress.rankId) return;
+  const ref = rankDb();
+  if (!ref) { toast('❌ 랭킹 서버에 연결하지 못했어요.'); return; }
+  const ms = Math.max(1000, (finishTime || Date.now()) - startTime);
+  const btn = document.getElementById('rank-send');
+  btn.disabled = true;
+  const node = ref.push();
+  node.set({ sid: node.key, name, group: '방탈출', ms, at: Date.now() }).then(() => {
+    progress.rankId = node.key;
+    saveProgress();
+    document.getElementById('rank-form-area').classList.add('hidden');
+    toast('🏆 랭킹에 기록했어요!');
+    document.getElementById('rank-msg').textContent = '🎉 기록이 저장되었어요!';
+    renderRank();
+  }).catch(() => {
+    btn.disabled = false;
+    toast('❌ 기록을 남기지 못했어요. 잠시 뒤 다시 눌러 주세요.');
+  });
+}
+
+// ?board=1 : a ranking-only screen for the classroom projector
+function enterBoardMode() {
+  document.body.classList.add('rank-board-mode');
+  const box = document.getElementById('rank-box');
+  document.querySelector('.main-container').appendChild(box);
+  box.classList.remove('hidden');
+  document.getElementById('rank-form-area').classList.add('hidden');
+  listenRank();
+}
+
 // Window load init
 window.addEventListener('DOMContentLoaded', () => {
   restoreUI();
+  if (PARAMS.get('board') === '1') enterBoardMode();
 });
 </script>
 
