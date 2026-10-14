@@ -899,6 +899,7 @@ body {
 .rank-form input { flex: 1 1 160px; min-width: 0; padding: 11px 12px; border-radius: 8px; border: 1.5px solid var(--border2); background: #0a111c; color: #fff; font-size: 15px; font-family: inherit; }
 .rank-form button { padding: 11px 18px; }
 .rank-note { font-size: 12px; color: var(--text3); }
+.rank-teacher { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 6px; padding: 4px 10px; font-size: 11.5px; cursor: pointer; font-family: inherit; }
 .rank-list { list-style: none; margin: 10px 0 0; padding: 0; }
 .rank-list li { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #0a111c; margin-bottom: 6px; font-size: 14.5px; }
 .rank-list li.me { border: 1.5px solid var(--teal); background: rgba(0, 242, 254, 0.08); }
@@ -1367,6 +1368,7 @@ body {
       </div>
       <div id="rank-msg" class="rank-note" style="margin-top:8px"></div>
       <ol class="rank-list" id="rank-list"></ol>
+      <div style="text-align:right;margin-top:8px"><button type="button" class="rank-teacher" onclick="teacherResetRank()">🔒 교사용</button></div>
     </div>
   </div>
 </div>
@@ -2043,7 +2045,16 @@ function listenRank() {
     const v = snap.val() || {};
     rankRows = Object.keys(v).map(k => ({ id: k, name: String(v[k].name || '').slice(0, 12), ms: Number(v[k].ms) || 0, at: Number(v[k].at) || 0 }))
       .filter(r => r.name && r.ms > 0);
-    if (rankRows.length) msg.textContent = progress.rankId ? '🎉 기록이 저장되었어요!' : '';
+    // the teacher cleared the board: a device whose record is gone may leave a new record
+    if (progress.rankId && !rankRows.some(r => r.id === progress.rankId)) {
+      progress.rankId = '';
+      saveProgress();
+      if (!document.body.classList.contains('rank-board-mode')) {
+        document.getElementById('rank-form-area').classList.remove('hidden');
+        document.getElementById('rank-send').disabled = false;
+      }
+    }
+    msg.textContent = rankRows.length ? (progress.rankId ? '🎉 기록이 저장되었어요!' : '') : '';
     renderRank();
   }, err => {
     rankListening = false;
@@ -2080,6 +2091,23 @@ function submitRank() {
     btn.disabled = false;
     toast('❌ 기록을 남기지 못했어요. 잠시 뒤 다시 눌러 주세요.');
   });
+}
+
+// Teacher: clear the whole ranking. The password is only checked in the page (it is a classroom convenience, not security).
+const TEACHER_PIN = '5004';
+function teacherResetRank() {
+  const pin = prompt('교사용 비밀번호를 입력하세요.');
+  if (pin === null) return;
+  if (pin.trim() !== TEACHER_PIN) { toast('❌ 비밀번호가 맞지 않습니다.'); return; }
+  const ref = rankDb();
+  if (!ref) { toast('❌ 랭킹 서버에 연결하지 못했어요.'); return; }
+  if (!confirm(`랭킹(${RANK_CODE})의 기록 ${rankRows.length}개를 모두 지울까요? 되돌릴 수 없습니다.`)) return;
+  ref.remove().then(() => {
+    rankRows = [];
+    renderRank();
+    document.getElementById('rank-msg').textContent = '랭킹을 초기화했어요.';
+    toast('🧹 랭킹을 초기화했습니다.');
+  }).catch(() => toast('❌ 초기화하지 못했어요. 잠시 뒤 다시 시도해 주세요.'));
 }
 
 // ?board=1 : a ranking-only screen for the classroom projector
