@@ -1593,8 +1593,8 @@ function toggleScale() {
         progress.tokens = collectedTokens.slice();
         saveProgress();
         updateTokensUI();
-        fb.innerHTML = `🎉 <strong style="color:var(--green)">정밀 계량 대성공 (${finalVal.toFixed(3)}g)!</strong> 힌트 문자 [<strong>${nextChar.toUpperCase()}</strong>] 획득!`;
-        toast(`힌트 문자 '${nextChar.toUpperCase()}' 획득!`);
+        fb.innerHTML = `🎉 <strong style="color:var(--green)">정밀 계량 대성공 (${finalVal.toFixed(3)}g)!</strong> 힌트 문자 [<strong>${nextChar}</strong>] 획득!`;
+        toast(`힌트 문자 '${nextChar}' 획득!`);
       } else {
         fb.innerHTML = `🎉 <strong style="color:var(--green)">모든 힌트 문자 4개를 전부 획득했습니다!</strong> 단어를 조합하여 노트북을 여세요.`;
       }
@@ -1627,7 +1627,7 @@ function updateTokensUI() {
   for (let i = 0; i < 4; i++) {
     const el = document.getElementById(`token-${i}`);
     if (i < collectedTokens.length) {
-      el.textContent = collectedTokens[i].toUpperCase();
+      el.textContent = collectedTokens[i];
       el.className = 'char-token';
     } else {
       el.textContent = '?';
